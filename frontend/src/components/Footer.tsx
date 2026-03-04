@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import logo from '../assets/logo.png';  
 
 export default function Footer() {
   return (
@@ -8,13 +9,12 @@ export default function Footer() {
 
           {/* Brand */}
           <div className="col-span-1 sm:col-span-2 lg:col-span-1">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                  <path d="M12 2v20M2 12h20M6 6l12 12M6 18L18 6" />
-                </svg>
-              </div>
-              <span className="font-display font-bold text-xl">Nano Geyser</span>
+            <div className="mb-4">
+              <img 
+                src={logo} 
+                alt="Nano Geyser Logo" 
+                className="h-20 w-auto object-contain"
+              />
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">
               Công nghệ lọc nước tiên tiến từ Mỹ. Mang nước sạch - an toàn - giàu khoáng chất đến mọi gia đình Việt Nam.

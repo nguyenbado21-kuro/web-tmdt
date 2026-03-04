@@ -1,23 +1,41 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { useFetch } from '../hooks/useFetch';
-import { Category, Product } from '../types';
+import { Category, Product, getProductImages } from '../types';
 import ProductCard from '../components/ProductCard';
 import SectionTitle from '../components/SectionTitle';
 import Button from '../components/Button';
 import LoadingSpinner, { ErrorState } from '../components/LoadingSpinner';
+import slider1 from '../assets/img-slider/1.png';
+import slider2 from '../assets/img-slider/2.png';
+import slider3 from '../assets/img-slider/3.png';
 
 // ───── Hero ──────────────────────────────────────────────────────────────────
 function HeroSection() {
   const navigate = useNavigate();
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const slides = [slider1, slider2, slider3];
+
+  // Auto slide every 3 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [slides.length]);
+
+  const goToSlide = (index: number) => {
+    setCurrentSlide(index);
+  };
+
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-green-950 via-green-900 to-gray-900 text-white">
-      {/* Decorative blobs with animation */}
+      {/* Decorative blobs */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-brand-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 animate-float" />
-      <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent-500/10 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4 animate-float" style={{ animationDelay: '1s' }} />
+      <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent-500/10 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4 animate-float" style={{ animationDelay: '3s' }} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left */}
           <div className="relative z-10">
@@ -25,13 +43,13 @@ function HeroSection() {
               <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
               Công nghệ lọc nước từ Mỹ
             </span>
-            <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-bold leading-[1.05] mb-6 animate-fade-in-up">
-              Nước sạch <em className="text-accent-400 not-italic animate-pulse">An toàn</em><br /> Cho mọi nhà
+            <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-bold leading-[1.05] mb-6 animate-fade-in-left delay-100">
+              Nước sạch <br /><em className="text-accent-400 not-italic">An Toàn</em><br /> Cho mọi nhà
             </h1>
-            <p className="text-white/60 text-lg leading-relaxed max-w-md mb-8 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+            <p className="text-white/60 text-lg leading-relaxed max-w-md mb-8 animate-fade-in-left delay-200">
               Máy lọc nước Nano Geyser - Công nghệ tiên tiến từ Mỹ, lọc sạch 99.9% tạp chất, giữ lại khoáng chất tự nhiên có lợi cho sức khỏe.
             </p>
-            <div className="flex flex-wrap gap-4 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+            <div className="flex flex-wrap gap-4 animate-fade-in-left delay-300">
               <Button size="lg" onClick={() => navigate('/shop')} className="group">
                 Xem sản phẩm
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="group-hover:translate-x-1 transition-transform">
@@ -44,9 +62,9 @@ function HeroSection() {
               </Button>
             </div>
             {/* Stats row */}
-            <div className="flex gap-8 mt-12 pt-10 border-t border-white/10 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
-              {[['10K+', 'Khách hàng'], ['50+', 'Đại lý'], ['99%', 'Hài lòng']].map(([n, l], i) => (
-                <div key={l} className="hover:scale-110 transition-transform duration-300" style={{ animationDelay: `${0.8 + i * 0.1}s` }}>
+            <div className="flex gap-8 mt-12 pt-10 border-t border-white/10 animate-fade-in-up delay-400">
+              {[['10K+', 'Khách hàng'], ['50+', 'Đại lý'], ['99%', 'Hài lòng']].map(([n, l]) => (
+                <div key={l} className="hover:scale-110 transition-transform duration-300">
                   <div className="font-display font-bold text-2xl text-white">{n}</div>
                   <div className="text-white/40 text-sm">{l}</div>
                 </div>
@@ -54,24 +72,41 @@ function HeroSection() {
             </div>
           </div>
 
-          {/* Right - image grid */}
-          <div className="relative z-10 grid grid-cols-2 gap-3 max-w-md mx-auto lg:mx-0">
-            {[
-              { img: 'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=400&q=80', tall: true, label: 'Máy lọc GB-01' },
-              { img: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=400&q=80', tall: false, label: 'Máy lọc GB-02' },
-              { img: 'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=400&q=80', tall: false, label: 'Lõi lọc RO' },
-              { img: 'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=400&q=80', tall: true, label: 'Máy lọc Smart' },
-            ].map((item, i) => (
-              <div key={i}
-                className={`relative overflow-hidden rounded-2xl border border-white/10 hover:scale-105 hover:rotate-1 transition-all duration-500 animate-scale-in ${item.tall ? 'row-span-1' : ''}`}
-                style={{ aspectRatio: item.tall ? '4/5' : '4/3', animationDelay: `${i * 0.1}s` }}>
-                <img src={item.img} alt={item.label} className="w-full h-full object-cover hover:scale-110 transition-transform duration-700" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <span className="absolute bottom-3 left-3 text-white text-xs font-medium bg-white/20 backdrop-blur px-2 py-1 rounded-full">
-                  {item.label}
-                </span>
-              </div>
-            ))}
+          {/* Right - Image Slider */}
+          <div className="relative z-10 max-w-lg mx-auto lg:mx-0 animate-fade-in-right delay-200">
+            <div className="relative aspect-square rounded-2xl overflow-hidden group cursor-pointer">
+              {/* Slides */}
+              {slides.map((slide, index) => (
+                <div
+                  key={index}
+                  className={`absolute inset-0 transition-opacity duration-1000 ${
+                    index === currentSlide ? 'opacity-100' : 'opacity-0'
+                  }`}
+                >
+                  <img
+                    src={slide}
+                    alt={`Máy lọc nước Nano Geyser ${index + 1}`}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Dots Navigation */}
+            <div className="flex justify-center gap-2 mt-6">
+              {slides.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => goToSlide(index)}
+                  className={`transition-all duration-300 rounded-full ${
+                    index === currentSlide
+                      ? 'w-8 h-2 bg-white'
+                      : 'w-2 h-2 bg-white/40 hover:bg-white/60'
+                  }`}
+                  aria-label={`Chuyển đến slide ${index + 1}`}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -85,31 +120,43 @@ function CategoriesSection() {
   const navigate = useNavigate();
 
   return (
-    <section className="py-20 bg-gray-50">
+    <section className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <SectionTitle tag="Danh mục" title="Sản phẩm" highlight="Theo loại" />
+        <div className="mb-8">
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">DANH MỤC</h2>
+        </div>
+        
         {loading && <LoadingSpinner />}
         {error && <ErrorState message={error} />}
         {categories && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
             {categories.map((cat: Category, index: number) => (
-              <button key={cat.id}
+              <button
+                key={cat.id}
                 onClick={() => navigate(`/shop?categoryId=${cat.id}`)}
-                className="group relative overflow-hidden rounded-2xl aspect-square bg-gray-200 border-2 border-transparent hover:border-brand-500 transition-all duration-500 animate-scale-in hover:scale-105"
-                style={{ animationDelay: `${index * 0.1}s` }}>
-                <img src={cat.image} alt={cat.name}
-                  className="w-full h-full object-cover group-hover:scale-125 group-hover:rotate-3 transition-all duration-700"
-                  onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400?text=' + cat.name; }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-transparent to-transparent group-hover:from-brand-900/90 transition-all duration-500" />
-                <div className="absolute bottom-0 left-0 right-0 p-4 text-left transform group-hover:translate-y-0 transition-transform duration-300">
-                  <h3 className="text-white font-semibold text-base group-hover:text-brand-300 transition-colors">{cat.name}</h3>
-                  <p className="text-white/60 text-xs group-hover:text-white/80 transition-colors">{cat.productCount} sản phẩm</p>
+                className="group flex flex-col items-center gap-3 p-4 rounded-xl hover:bg-gray-50 transition-all duration-300 animate-scale-in"
+                style={{ animationDelay: `${index * 0.05}s` }}>
+                {/* Icon/Image Container */}
+                <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden group-hover:scale-110 transition-transform duration-300">
+                  {cat.image ? (
+                    <img 
+                      src={cat.image} 
+                      alt={cat.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => { 
+                        (e.target as HTMLImageElement).style.display = 'none';
+                        (e.target as HTMLImageElement).parentElement!.innerHTML = '<span class="text-2xl">🏷️</span>';
+                      }}
+                    />
+                  ) : (
+                    <span className="text-2xl">🏷️</span>
+                  )}
                 </div>
-                {/* Shimmer effect on hover */}
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                  <div className="absolute inset-0 shimmer" />
-                </div>
+                
+                {/* Category Name */}
+                <span className="text-xs text-center text-gray-700 font-medium leading-tight line-clamp-2 group-hover:text-brand-500 transition-colors">
+                  {cat.name}
+                </span>
               </button>
             ))}
           </div>
@@ -121,7 +168,10 @@ function CategoriesSection() {
 
 // ───── Featured Products ──────────────────────────────────────────────────────
 function FeaturedProducts() {
-  const { data: products, loading, error } = useFetch(() => api.products.getAll({ featured: true }));
+  const { data: allProducts, loading, error } = useFetch(() => api.products.getAllFromCategories());
+  
+  // Get first 4 products
+  const products = allProducts?.slice(0, 4);
 
   return (
     <section className="py-20">
@@ -138,7 +188,7 @@ function FeaturedProducts() {
         </div>
         {loading && <LoadingSpinner />}
         {error && <ErrorState message={error} />}
-        {products && (
+        {products && products.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {products.map((p: Product, index: number) => (
               <div key={p.id} className="animate-fade-in-up" style={{ animationDelay: `${index * 0.1}s` }}>
@@ -154,7 +204,7 @@ function FeaturedProducts() {
 
 // ───── Best Sellers ───────────────────────────────────────────────────────────
 function BestSellers() {
-  const { data: products, loading } = useFetch(() => api.products.getAll());
+  const { data: products, loading } = useFetch(() => api.products.getAllFromCategories());
 
   const best = products?.slice(0, 3) ?? [];
 
@@ -175,15 +225,15 @@ function BestSellers() {
                 className="flex items-center gap-4 bg-white/5 hover:bg-white/10 rounded-2xl p-4 transition-colors group">
                 <span className="font-display text-3xl font-bold text-white/20 w-8">0{i + 1}</span>
                 <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-800 shrink-0">
-                  <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover" />
+                  <img src={getProductImages(p)[0]} alt={p.name} className="w-full h-full object-cover" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h4 className="font-semibold text-white truncate group-hover:text-brand-400 transition-colors">
                     {p.name}
                   </h4>
-                  <p className="text-gray-400 text-sm">⭐ {p.rating} · {p.reviewCount.toLocaleString()} đánh giá</p>
+                  <p className="text-gray-400 text-sm">⭐ {p.rating || 0} · {(p.reviewCount || 0).toLocaleString()} đánh giá</p>
                 </div>
-                <span className="text-white font-bold shrink-0">{p.price.toLocaleString()}đ</span>
+                <span className="text-white font-bold shrink-0">{p.price.toLocaleString()}₫</span>
               </Link>
             ))}
           </div>

@@ -1,25 +1,112 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../store/cartContext';
 import { useFetch } from '../hooks/useFetch';
 import { api } from '../services/api';
-import { Category } from '../types';
+import { Category, Product, getProductImages } from '../types';
+import logo from '../assets/logo.png';
+import cartIcon from '../assets/cart.png';
 
 export default function Header() {
   const { totalItems } = useCart();
   const [search, setSearch] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
   const [productsDropdownOpen, setProductsDropdownOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [searchSuggestions, setSearchSuggestions] = useState<Product[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   const { data: categories } = useFetch(() => api.categories.getAll());
+
+  // Search suggestions effect
+  useEffect(() => {
+    const searchProducts = async () => {
+      if (search.trim().length >= 2) {
+        try {
+          // Get all products and filter client-side for better matching
+          const response = await api.products.getAllFromCategories();
+          if (response.success && response.data) {
+            const searchTerm = search.trim().toLowerCase();
+            const filteredProducts = response.data.filter(product => 
+              product.name.toLowerCase().includes(searchTerm) ||
+              (product.description && product.description.toLowerCase().includes(searchTerm)) ||
+              (product.product_code && product.product_code.toLowerCase().includes(searchTerm))
+            );
+            setSearchSuggestions(filteredProducts.slice(0, 5)); // Limit to 5 suggestions
+            setShowSuggestions(true);
+          }
+        } catch (error) {
+          console.error('Search error:', error);
+        }
+      } else {
+        setSearchSuggestions([]);
+        setShowSuggestions(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(searchProducts, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [search]);
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    // Check initial login state
+    setIsLoggedIn(!!localStorage.getItem('isLoggedIn'));
+
+    // Listen for storage changes (login/logout events)
+    const handleStorageChange = () => {
+      setIsLoggedIn(!!localStorage.getItem('isLoggedIn'));
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (search.trim()) {
       navigate(`/shop?search=${encodeURIComponent(search.trim())}`);
       setSearch('');
+      setShowSuggestions(false);
     }
+  };
+
+  const handleSuggestionClick = (product: Product) => {
+    navigate(`/product/${product.id}`);
+    setSearch('');
+    setShowSuggestions(false);
+  };
+
+  // Helper function to highlight search term in text
+  const highlightSearchTerm = (text: string, searchTerm: string) => {
+    if (!searchTerm.trim()) return text;
+    
+    const regex = new RegExp(`(${searchTerm.trim()})`, 'gi');
+    const parts = text.split(regex);
+    
+    return parts.map((part, index) => 
+      regex.test(part) ? (
+        <span key={index} className="bg-yellow-200 font-semibold">{part}</span>
+      ) : (
+        part
+      )
+    );
   };
 
   const handleCategoryClick = (categoryId: string) => {
@@ -33,13 +120,12 @@ export default function Header() {
         <div className="flex items-center justify-between h-16 gap-4">
 
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 shrink-0">
-            <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                <path d="M12 2v20M2 12h20M6 6l12 12M6 18L18 6" />
-              </svg>
-            </div>
-            <span className="font-display font-bold text-xl text-gray-900">Nano Geyser</span>
+          <Link to="/" className="flex items-center shrink-0">
+            <img 
+              src={logo} 
+              alt="Nano Geyser Logo" 
+              className="h-20 w-auto object-contain"
+            />
           </Link>
 
           {/* Nav links */}
@@ -54,7 +140,10 @@ export default function Header() {
               onMouseEnter={() => setProductsDropdownOpen(true)}
               onMouseLeave={() => setProductsDropdownOpen(false)}
             >
-              <button className="text-sm font-medium text-gray-600 hover:text-green-600 transition-colors flex items-center gap-1">
+              <button 
+                onClick={() => navigate('/shop')}
+                className="text-sm font-medium text-gray-600 hover:text-green-600 transition-colors flex items-center gap-1" 
+              >
                 Sản phẩm
                 <svg 
                   width="12" 
@@ -90,39 +179,104 @@ export default function Header() {
               )}
             </div>
 
+            <Link to="/orders" className="text-sm font-medium text-gray-600 hover:text-green-600 transition-colors">
+              Đơn hàng
+            </Link>
+
             <Link to="/shop" className="text-sm font-medium text-gray-600 hover:text-green-600 transition-colors">
               Khuyến mãi
             </Link>
           </nav>
 
           {/* Search */}
-          <form onSubmit={handleSearch} className="hidden sm:flex flex-1 max-w-xs items-center gap-2 bg-gray-50 border border-gray-200 rounded-full px-4 py-2">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
-              <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Tìm kiếm sản phẩm..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="bg-transparent text-sm flex-1 outline-none text-gray-700 placeholder-gray-400"
-            />
-          </form>
+          <div ref={searchRef} className="hidden sm:flex flex-1 max-w-xs relative">
+            <form onSubmit={handleSearch} className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-full px-4 py-2 w-full">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
+                <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Tìm kiếm sản phẩm..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onFocus={() => search.length >= 2 && setShowSuggestions(true)}
+                className="bg-transparent text-sm flex-1 outline-none text-gray-700 placeholder-gray-400"
+              />
+            </form>
+
+            {/* Search Suggestions */}
+            {showSuggestions && searchSuggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 max-h-80 overflow-y-auto">
+                {searchSuggestions.map((product) => (
+                  <button
+                    key={product.id}
+                    onClick={() => handleSuggestionClick(product)}
+                    className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center gap-3"
+                  >
+                    <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 shrink-0">
+                      <img 
+                        src={getProductImages(product)[0]} 
+                        alt={product.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://via.placeholder.com/48x48?text=?';
+                        }}
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-gray-900 text-sm truncate">
+                        {highlightSearchTerm(product.name, search)}
+                      </h4>
+                      <p className="text-brand-600 font-semibold text-sm">
+                        {product.price.toLocaleString()}₫
+                      </p>
+                    </div>
+                  </button>
+                ))}
+                <div className="border-t border-gray-100 mt-2 pt-2 px-4">
+                  <button
+                    onClick={() => {
+                      navigate(`/shop?search=${encodeURIComponent(search.trim())}`);
+                      setShowSuggestions(false);
+                    }}
+                    className="text-brand-600 text-sm font-medium hover:underline"
+                  >
+                    Xem tất cả kết quả cho "{search}"
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* No results message */}
+            {showSuggestions && search.trim().length >= 2 && searchSuggestions.length === 0 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-100 py-4 z-50">
+                <div className="px-4 text-center text-gray-500 text-sm">
+                  Không tìm thấy sản phẩm nào cho "{search}"
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Actions */}
           <div className="flex items-center gap-2">
             <Link to="/cart" className="relative p-2 hover:bg-gray-100 rounded-full transition-colors">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
-                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-              </svg>
+              <img src={cartIcon} alt="Cart" className="w-6 h-6 object-contain" />
               {totalItems > 0 && (
                 <span className="absolute -top-1 -right-1 w-5 h-5 bg-brand-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
                   {totalItems > 9 ? '9+' : totalItems}
                 </span>
               )}
             </Link>
-            <Link to="/login" className="hidden sm:block btn-primary !py-2 !px-4 !text-sm">Đăng nhập</Link>
+            
+            {isLoggedIn ? (
+              <Link to="/profile" className="hidden sm:flex items-center gap-2 p-2 hover:bg-gray-100 rounded-full transition-colors">
+                <svg className="w-6 h-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </Link>
+            ) : (
+              <Link to="/login" className="hidden sm:block btn-primary !py-2 !px-4 !text-sm">Đăng nhập</Link>
+            )}
 
             {/* Mobile menu */}
             <button className="md:hidden p-2" onClick={() => setMobileOpen(!mobileOpen)}>
@@ -160,10 +314,18 @@ export default function Header() {
             </div>
           )}
           
+          <Link to="/orders" className="text-sm font-medium text-gray-700 py-1"
+            onClick={() => setMobileOpen(false)}>Đơn hàng</Link>
           <Link to="/cart" className="text-sm font-medium text-gray-700 py-1"
             onClick={() => setMobileOpen(false)}>Giỏ hàng</Link>
-          <Link to="/login" className="text-sm font-medium text-gray-700 py-1"
-            onClick={() => setMobileOpen(false)}>Đăng nhập</Link>
+          
+          {isLoggedIn ? (
+            <Link to="/profile" className="text-sm font-medium text-gray-700 py-1"
+              onClick={() => setMobileOpen(false)}>Tài khoản</Link>
+          ) : (
+            <Link to="/login" className="text-sm font-medium text-gray-700 py-1"
+              onClick={() => setMobileOpen(false)}>Đăng nhập</Link>
+          )}
         </div>
       )}
     </header>

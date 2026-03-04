@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
+import { api } from '../services/api';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -38,14 +39,60 @@ export default function Register() {
     setLoading(true);
 
     try {
-      // TODO: Implement actual register API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('Attempting register with:', { phone: form.phone, name: form.name, email: form.email });
+      const response = await api.auth.register({
+        phone: form.phone,
+        pass: form.password,
+        name: form.name,
+        email: form.email,
+      }) as any;
+      console.log('Register response:', response);
+      console.log('Response status:', response.status);
+      console.log('Response message:', response.message);
+
+      // API can return different formats:
+      // Success: { error: "success", data: {...} } or { status: 1, message: "success", data: {...} }
+      const isSuccess = response.error === 'success' ||
+                       response.status === 1 || 
+                       (response.message === 'success' && !response.status) ||
+                       (response.message === 'success' && response.status !== 0);
       
-      // Mock success
-      console.log('Register:', form);
-      navigate('/login');
+      if (response && isSuccess && response.data) {
+        console.log('✅ Registration successful!');
+        
+        // Save login state after successful registration
+        localStorage.setItem('isLoggedIn', 'true');
+        
+        // Get data from response
+        const data = response.data || response;
+        console.log('Register data:', data);
+        
+        if (data.token) {
+          localStorage.setItem('authToken', data.token);
+        }
+        
+        localStorage.setItem('userPhone', form.phone);
+        
+        if (data.user || data.id) {
+          localStorage.setItem('userData', JSON.stringify(data.user || data));
+        }
+        
+        // Trigger storage event for other components to update
+        window.dispatchEvent(new Event('storage'));
+        
+        console.log('Redirecting to home');
+        navigate('/');
+      } else {
+        // Registration failed - show error message from API
+        const errorMsg = response.message && response.message !== 'success' 
+          ? response.message 
+          : (response.error || 'Đăng ký thất bại. Vui lòng thử lại');
+        console.error('Registration failed:', errorMsg);
+        setError(errorMsg);
+      }
     } catch (err) {
-      setError('Đăng ký thất bại. Vui lòng thử lại');
+      console.error('Register error:', err);
+      setError('Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }

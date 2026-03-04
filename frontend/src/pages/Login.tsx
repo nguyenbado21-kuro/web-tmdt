@@ -1,10 +1,14 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import Button from '../components/Button';
+import { api } from '../services/api';
 
 export default function Login() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: '', password: '' });
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/';
+  
+  const [form, setForm] = useState({ phone: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -14,14 +18,50 @@ export default function Login() {
     setLoading(true);
 
     try {
-      // TODO: Implement actual login API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('Attempting login with:', { phone: form.phone });
+      const response = await api.auth.login(form.phone, form.password) as any;
+      console.log('Login response:', response);
       
-      // Mock success
-      console.log('Login:', form);
-      navigate('/');
+      // API returns: { success: false, error: "success", data: {...} }
+      // Check if error field is "success" (weird API design but that's what we have)
+      const isSuccess = response.error === 'success' || 
+                       response.status === 1 || 
+                       response.success === true ||
+                       (response.message === 'success' && response.data);
+      
+      console.log('Is success?', isSuccess);
+      
+      if (response && isSuccess && response.data) {
+        console.log('✅ Login successful!');
+        
+        // Save login state
+        localStorage.setItem('isLoggedIn', 'true');
+        
+        // Get data from response
+        const data = response.data;
+        console.log('Login data:', data);
+        
+        if (data.token) {
+          localStorage.setItem('authToken', data.token);
+        }
+        
+        localStorage.setItem('userPhone', form.phone);
+        localStorage.setItem('userData', JSON.stringify(data));
+        
+        // Trigger storage event for other components to update
+        window.dispatchEvent(new Event('storage'));
+        
+        console.log('Redirecting to:', redirectTo);
+        navigate(redirectTo);
+      } else {
+        console.log('❌ Login failed');
+        const errorMsg = (response.error && response.error !== 'success') ? response.error : 'Số điện thoại hoặc mật khẩu không đúng';
+        console.error('Login failed:', errorMsg);
+        setError(errorMsg);
+      }
     } catch (err) {
-      setError('Email hoặc mật khẩu không đúng');
+      console.error('Login error:', err);
+      setError('Đã xảy ra lỗi khi đăng nhập. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
@@ -49,19 +89,19 @@ export default function Login() {
               </div>
             )}
 
-            {/* Email */}
+            {/* Phone */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                Số điện thoại
               </label>
               <input
-                type="email"
-                id="email"
+                type="tel"
+                id="phone"
                 required
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
-                placeholder="email@example.com"
+                placeholder="0987654321"
               />
             </div>
 

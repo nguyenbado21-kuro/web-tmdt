@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Product } from '../types';
+import { Product, getProductImages, formatPrice } from '../types';
 import { useCart } from '../store/cartContext';
 
 interface Props {
@@ -23,17 +23,18 @@ function StarRating({ rating, reviewCount }: { rating: number; reviewCount: numb
 
 export default function ProductCard({ product }: Props) {
   const { addToCart } = useCart();
+  const images = getProductImages(product);
 
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
 
   return (
-    <div className="card group flex flex-col">
+    <div className="card group flex flex-col hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
       {/* Image */}
       <Link to={`/product/${product.id}`} className="relative overflow-hidden bg-gray-50 aspect-square block">
         <img
-          src={product.images[0]}
+          src={images[0]}
           alt={product.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           onError={(e) => {
@@ -60,19 +61,19 @@ export default function ProductCard({ product }: Props) {
       {/* Content */}
       <div className="p-4 flex flex-col gap-2 flex-1">
         <div className="text-xs text-brand-500 font-medium uppercase tracking-wide">
-          {product.categoryId.replace('cat-', 'Category ')}
+          {product.categoryId ? product.categoryId.toString().replace('cat-', 'Category ') : 'Sản phẩm'}
         </div>
         <Link to={`/product/${product.id}`}>
           <h3 className="font-semibold text-gray-900 leading-snug hover:text-brand-500 transition-colors line-clamp-2">
             {product.name}
           </h3>
         </Link>
-        <StarRating rating={product.rating} reviewCount={product.reviewCount} />
+        <StarRating rating={product.rating || 0} reviewCount={product.reviewCount || 0} />
 
         <div className="flex items-center gap-2 mt-auto pt-2">
-          <span className="text-lg font-bold text-gray-900">{product.price.toLocaleString('vi-VN')}đ</span>
+          <span className="text-lg font-bold text-gray-900">{formatPrice(product.price)}đ</span>
           {product.originalPrice && (
-            <span className="text-sm text-gray-400 line-through">{product.originalPrice.toLocaleString('vi-VN')}đ</span>
+            <span className="text-sm text-gray-400 line-through">{formatPrice(product.originalPrice)}đ</span>
           )}
         </div>
 

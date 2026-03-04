@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../services/api';
 import { useFetch } from '../hooks/useFetch';
-import { Category, Product } from '../types';
+import { Category, Product, getProductImages } from '../types';
 import ProductCard from '../components/ProductCard';
 import SectionTitle from '../components/SectionTitle';
 import LoadingSpinner, { ErrorState } from '../components/LoadingSpinner';
@@ -15,10 +15,17 @@ export default function Shop() {
   const [sort, setSort] = useState('default');
 
   const { data: categories } = useFetch(() => api.categories.getAll());
-  const { data: products, loading, error, refetch } = useFetch(
-    () => api.products.getAll({ categoryId: selectedCat || undefined, search: search || undefined }),
-    [selectedCat, search]
+  const { data: allProducts, loading, error, refetch } = useFetch(
+    () => api.products.getAllFromCategories(),
+    []
   );
+
+  // Filter products by category and search
+  const products = allProducts?.filter(p => {
+    if (selectedCat && p.category_id !== Number(selectedCat)) return false;
+    if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
 
   useEffect(() => {
     setSelectedCat(searchParams.get('categoryId') ?? '');
@@ -46,7 +53,7 @@ export default function Shop() {
   const sorted = [...(products ?? [])].sort((a: Product, b: Product) => {
     if (sort === 'price-asc') return a.price - b.price;
     if (sort === 'price-desc') return b.price - a.price;
-    if (sort === 'rating') return b.rating - a.rating;
+    if (sort === 'rating') return (b.rating || 0) - (a.rating || 0);
     return 0;
   });
 
@@ -89,9 +96,9 @@ export default function Shop() {
               </button>
               {categories?.map((cat: Category) => (
                 <button key={cat.id}
-                  onClick={() => handleFilterCat(cat.id)}
+                  onClick={() => handleFilterCat(String(cat.id))}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-colors text-left
-                    ${selectedCat === cat.id ? 'bg-brand-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                    ${selectedCat === String(cat.id) ? 'bg-brand-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
                   {cat.name}
                 </button>
               ))}
