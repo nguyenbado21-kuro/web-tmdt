@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { useFetch } from '../hooks/useFetch';
-import { Category, Product, getProductImages } from '../types';
+import { Category, Product, getProductImages, formatPrice } from '../types';
 import ProductCard from '../components/ProductCard';
 import SectionTitle from '../components/SectionTitle';
 import Button from '../components/Button';
 import LoadingSpinner, { ErrorState } from '../components/LoadingSpinner';
+import FloatingHotline from '../components/FloatingHotline';
+
 import slider1 from '../assets/img-slider/1.png';
 import slider2 from '../assets/img-slider/2.png';
 import slider3 from '../assets/img-slider/3.png';
@@ -116,7 +118,7 @@ function HeroSection() {
 
 // ───── Categories ─────────────────────────────────────────────────────────────
 function CategoriesSection() {
-  const { data: categories, loading, error } = useFetch(() => api.categories.getAll());
+  const { data: categories, loading, error } = useFetch(() => api.categories.getAll(), []);
   const navigate = useNavigate();
 
   return (
@@ -134,6 +136,7 @@ function CategoriesSection() {
               <button
                 key={cat.id}
                 onClick={() => navigate(`/shop?categoryId=${cat.id}`)}
+                
                 className="group flex flex-col items-center gap-3 p-4 rounded-xl hover:bg-gray-50 transition-all duration-300 animate-scale-in"
                 style={{ animationDelay: `${index * 0.05}s` }}>
                 {/* Icon/Image Container */}
@@ -168,7 +171,7 @@ function CategoriesSection() {
 
 // ───── Featured Products ──────────────────────────────────────────────────────
 function FeaturedProducts() {
-  const { data: allProducts, loading, error } = useFetch(() => api.products.getAllFromCategories());
+  const { data: allProducts, loading, error } = useFetch(() => api.products.getAllFromCategories(), []);
   
   // Get first 4 products
   const products = allProducts?.slice(0, 4);
@@ -204,7 +207,7 @@ function FeaturedProducts() {
 
 // ───── Best Sellers ───────────────────────────────────────────────────────────
 function BestSellers() {
-  const { data: products, loading } = useFetch(() => api.products.getAllFromCategories());
+  const { data: products, loading } = useFetch(() => api.products.getAllFromCategories(), []);
 
   const best = products?.slice(0, 3) ?? [];
 
@@ -233,7 +236,7 @@ function BestSellers() {
                   </h4>
                   <p className="text-gray-400 text-sm">⭐ {p.rating || 0} · {(p.reviewCount || 0).toLocaleString()} đánh giá</p>
                 </div>
-                <span className="text-white font-bold shrink-0">{p.price.toLocaleString()}₫</span>
+                <span className="text-white font-bold shrink-0">{formatPrice(p.price)}₫</span>
               </Link>
             ))}
           </div>
@@ -300,6 +303,7 @@ function NewsletterSection() {
 export default function Home() {
   return (
     <main>
+      <FloatingHotline phoneNumber="0123456789" />
       <HeroSection />
       <CategoriesSection />
       <FeaturedProducts />

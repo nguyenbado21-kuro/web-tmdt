@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../services/api';
 import { useFetch } from '../hooks/useFetch';
-import { Category, Product, getProductImages } from '../types';
+import { Category, Product } from '../types';
 import ProductCard from '../components/ProductCard';
 import SectionTitle from '../components/SectionTitle';
 import LoadingSpinner, { ErrorState } from '../components/LoadingSpinner';
+import FloatingHotline from '../components/FloatingHotline';
 
 export default function Shop() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -13,8 +14,9 @@ export default function Shop() {
   const [search, setSearch] = useState(searchParams.get('search') ?? '');
   const [searchInput, setSearchInput] = useState(searchParams.get('search') ?? '');
   const [sort, setSort] = useState('default');
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
-  const { data: categories } = useFetch(() => api.categories.getAll());
+  const { data: categories } = useFetch(() => api.categories.getAll(), []);
   const { data: allProducts, loading, error, refetch } = useFetch(
     () => api.products.getAllFromCategories(),
     []
@@ -33,7 +35,18 @@ export default function Shop() {
     setSearchInput(searchParams.get('search') ?? '');
   }, [searchParams]);
 
+  // Handle scroll to show/hide floating button
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const handleFilterCat = (catId: string) => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     setSelectedCat(catId);
     const params: Record<string, string> = {};
     if (catId) params.categoryId = catId;
@@ -50,6 +63,10 @@ export default function Shop() {
     setSearchParams(params);
   };
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const sorted = [...(products ?? [])].sort((a: Product, b: Product) => {
     if (sort === 'price-asc') return a.price - b.price;
     if (sort === 'price-desc') return b.price - a.price;
@@ -62,7 +79,7 @@ export default function Shop() {
       {/* Shop header */}
       <div className="bg-gray-50 border-b border-gray-100 py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <SectionTitle tag="All products" title="Shop Our" highlight="Collection" />
+          <SectionTitle tag="Tất cả sản phẩm" title="Khám phá" highlight="Bộ sưu tập của chúng tôi" />
 
           {/* Search bar */}
           <form onSubmit={handleSearch} className="flex gap-2 max-w-md">
@@ -75,7 +92,7 @@ export default function Shop() {
             />
             <button type="submit"
               className="px-5 py-2.5 bg-brand-500 text-white rounded-full text-sm font-semibold hover:bg-brand-600 transition-colors">
-              Search
+              Tìm Kiếm
             </button>
           </form>
         </div>
@@ -86,13 +103,13 @@ export default function Shop() {
 
           {/* Sidebar filters */}
           <aside className="lg:w-60 shrink-0">
-            <h3 className="font-semibold text-gray-900 mb-4">Categories</h3>
+            <h3 className="font-semibold text-gray-900 mb-4">Danh mục</h3>
             <div className="flex flex-row lg:flex-col gap-2 flex-wrap">
               <button
                 onClick={() => handleFilterCat('')}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors text-left
                   ${!selectedCat ? 'bg-brand-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-                All Products
+                Tất cả sản phẩm
               </button>
               {categories?.map((cat: Category) => (
                 <button key={cat.id}
@@ -105,13 +122,13 @@ export default function Shop() {
             </div>
 
             <div className="mt-8">
-              <h3 className="font-semibold text-gray-900 mb-4">Sort By</h3>
+              <h3 className="font-semibold text-gray-900 mb-4">Sắp xếp theo</h3>
               <select value={sort} onChange={(e) => setSort(e.target.value)}
                 className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-700 outline-none focus:border-brand-500">
-                <option value="default">Default</option>
-                <option value="price-asc">Price: Low to High</option>
-                <option value="price-desc">Price: High to Low</option>
-                <option value="rating">Top Rated</option>
+                <option value="default">Mặc định</option>
+                <option value="price-asc">Giá: Thấp tới cao</option>
+                <option value="price-desc">Giá: Cao xuống thấp</option>
+                <option value="rating">Top Đánh giá</option>
               </select>
             </div>
           </aside>
@@ -123,8 +140,8 @@ export default function Shop() {
             {!loading && !error && sorted.length === 0 && (
               <div className="text-center py-20 text-gray-400">
                 <div className="text-5xl mb-4">🔍</div>
-                <p className="text-lg font-medium">No products found</p>
-                <p className="text-sm mt-1">Try a different search or category</p>
+                <p className="text-lg font-medium">Không tìm thấy sản phẩm</p>
+                <p className="text-sm mt-1">Hãy thử tìm kiếm hoặc chọn danh mục khác</p>
               </div>
             )}
             {sorted.length > 0 && (
@@ -138,6 +155,8 @@ export default function Shop() {
           </div>
         </div>
       </div>
+      {/* Floating hotline button */}
+      <FloatingHotline phoneNumber="0123456789" />
     </main>
   );
 }

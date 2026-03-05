@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../store/cartContext';
 import { useFetch } from '../hooks/useFetch';
 import { api } from '../services/api';
-import { Category, Product, getProductImages } from '../types';
+import { Category, Product, getProductImages, formatPrice } from '../types';
 import logo from '../assets/logo.png';
 import cartIcon from '../assets/cart.png';
 
@@ -18,36 +18,13 @@ export default function Header() {
   const searchRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  const { data: categories } = useFetch(() => api.categories.getAll());
+  const { data: categories } = useFetch(() => api.categories.getAll(), []);
 
-  // Search suggestions effect
+  // Search suggestions effect - TEMPORARILY DISABLED
   useEffect(() => {
-    const searchProducts = async () => {
-      if (search.trim().length >= 2) {
-        try {
-          // Get all products and filter client-side for better matching
-          const response = await api.products.getAllFromCategories();
-          if (response.success && response.data) {
-            const searchTerm = search.trim().toLowerCase();
-            const filteredProducts = response.data.filter(product => 
-              product.name.toLowerCase().includes(searchTerm) ||
-              (product.description && product.description.toLowerCase().includes(searchTerm)) ||
-              (product.product_code && product.product_code.toLowerCase().includes(searchTerm))
-            );
-            setSearchSuggestions(filteredProducts.slice(0, 5)); // Limit to 5 suggestions
-            setShowSuggestions(true);
-          }
-        } catch (error) {
-          console.error('Search error:', error);
-        }
-      } else {
-        setSearchSuggestions([]);
-        setShowSuggestions(false);
-      }
-    };
-
-    const debounceTimer = setTimeout(searchProducts, 300);
-    return () => clearTimeout(debounceTimer);
+    // Disable search suggestions to prevent infinite API calls
+    setSearchSuggestions([]);
+    setShowSuggestions(false);
   }, [search]);
 
   // Close suggestions when clicking outside
@@ -164,13 +141,13 @@ export default function Header() {
                   {categories.map((cat: Category) => (
                     <button
                       key={cat.id}
-                      onClick={() => handleCategoryClick(cat.id)}
+                      onClick={() => handleCategoryClick(cat.id.toString())}
                       className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-green-50 hover:text-green-600 transition-colors"
                     >
                       <div className="flex items-center justify-between">
                         <span>{cat.name}</span>
                         <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
-                          {cat.productCount}
+                          {(cat as any).productCount || 0}
                         </span>
                       </div>
                     </button>
@@ -218,9 +195,6 @@ export default function Header() {
                         src={getProductImages(product)[0]} 
                         alt={product.name}
                         className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = 'https://via.placeholder.com/48x48?text=?';
-                        }}
                       />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -228,7 +202,7 @@ export default function Header() {
                         {highlightSearchTerm(product.name, search)}
                       </h4>
                       <p className="text-brand-600 font-semibold text-sm">
-                        {product.price.toLocaleString()}₫
+                        {formatPrice(product.price)}₫
                       </p>
                     </div>
                   </button>
@@ -303,7 +277,7 @@ export default function Header() {
                 <button
                   key={cat.id}
                   onClick={() => {
-                    handleCategoryClick(cat.id);
+                    handleCategoryClick(cat.id.toString());
                     setMobileOpen(false);
                   }}
                   className="block text-sm text-gray-600 py-1"

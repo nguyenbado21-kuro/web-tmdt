@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../store/cartContext';
 import Button from '../components/Button';
 import { api } from '../services/api';
-import { formatPrice } from '../types';
+import { formatPrice, getProductImages } from '../types';
 import cartIcon from '../assets/cart.png';
+import FloatingHotline from '../components/FloatingHotline';
 
 export default function Cart() {
   const { items, totalPrice, totalItems, removeFromCart, updateQuantity, clearCart } = useCart();
@@ -18,11 +19,11 @@ export default function Cart() {
         customerName: 'Guest User',
         customerEmail: 'guest@shop.com',
         items: items.map((i) => ({
-          productId: i.product.id,
+          productId: i.product.id.toString(),
           productName: i.product.name,
           price: i.product.price,
           quantity: i.quantity,
-          image: i.product.images?.[0] || 'https://via.placeholder.com/96?text=P',
+          image: getProductImages(i.product)[0],
         })),
         totalPrice: totalPrice * 1.1,
         status: 'pending',
@@ -75,8 +76,10 @@ export default function Cart() {
           {items.map(({ product, quantity }) => (
             <div key={product.id} className="flex gap-4 bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
               <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-gray-50 shrink-0">
-                <img src={product.images?.[0] || 'https://via.placeholder.com/96?text=P'} alt={product.name} className="w-full h-full object-cover"
-                  onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/96?text=P'; }}
+                <img 
+                  src={getProductImages(product)[0]} 
+                  alt={product.name} 
+                  className="w-full h-full object-cover"
                 />
               </div>
               <div className="flex-1 min-w-0">
@@ -87,13 +90,13 @@ export default function Cart() {
                 <p className="text-brand-500 font-bold mt-1">{formatPrice(product.price)}₫</p>
                 <div className="flex items-center gap-3 mt-3">
                   <div className="flex items-center border border-gray-200 rounded-full text-sm">
-                    <button onClick={() => quantity > 1 ? updateQuantity(product.id, quantity - 1) : removeFromCart(product.id)}
+                    <button onClick={() => quantity > 1 ? updateQuantity(product.id.toString(), quantity - 1) : removeFromCart(product.id.toString())}
                       className="w-8 h-8 flex items-center justify-center hover:bg-gray-50 rounded-full font-bold">−</button>
                     <span className="w-8 text-center font-semibold">{quantity}</span>
-                    <button onClick={() => updateQuantity(product.id, quantity + 1)}
+                    <button onClick={() => updateQuantity(product.id.toString(), quantity + 1)}
                       className="w-8 h-8 flex items-center justify-center hover:bg-gray-50 rounded-full font-bold">+</button>
                   </div>
-                  <button onClick={() => removeFromCart(product.id)}
+                  <button onClick={() => removeFromCart(product.id.toString())}
                     className="text-xs text-red-400 hover:text-red-600 transition-colors">Remove</button>
                 </div>
               </div>
@@ -115,11 +118,8 @@ export default function Cart() {
               <div className="flex justify-between text-gray-600">
                 <span>Phí vận chuyển</span><span className="text-green-600">Miễn phí</span>
               </div>
-              <div className="flex justify-between text-gray-600">
-                <span>VAT (10%)</span><span>{formatPrice(totalPrice * 0.1)}₫</span>
-              </div>
               <div className="border-t border-gray-200 pt-3 flex justify-between font-bold text-gray-900 text-base">
-                <span>Tổng cộng</span><span>{formatPrice(totalPrice * 1.1)}₫</span>
+                <span>Tổng cộng</span><span>{formatPrice(totalPrice * 1)}₫</span>
               </div>
             </div>
             <Button size="lg" className="w-full" loading={checkoutStatus === 'loading'} onClick={handleCheckout}>
@@ -131,6 +131,7 @@ export default function Cart() {
           </div>
         </div>
       </div>
+      <FloatingHotline phoneNumber="0123456789" />
     </main>
   );
 }

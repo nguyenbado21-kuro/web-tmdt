@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface FetchState<T> {
   data: T | null;
@@ -12,6 +12,10 @@ export function useFetch<T>(fetcher: () => Promise<{ success: boolean; data?: T;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
+  const fetcherRef = useRef(fetcher);
+  
+  // Update fetcher ref without causing re-renders
+  fetcherRef.current = fetcher;
 
   const refetch = useCallback(() => setTick((t) => t + 1), []);
 
@@ -19,7 +23,8 @@ export function useFetch<T>(fetcher: () => Promise<{ success: boolean; data?: T;
     let cancelled = false;
     setLoading(true);
     setError(null);
-    fetcher()
+    
+    fetcherRef.current()
       .then((res) => {
         if (cancelled) return;
         if (res.success && res.data !== undefined) {

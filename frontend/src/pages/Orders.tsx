@@ -4,6 +4,8 @@ import { useFetch } from '../hooks/useFetch';
 import { api } from '../services/api';
 import { Order, formatPrice } from '../types';
 import LoadingSpinner, { ErrorState } from '../components/LoadingSpinner';
+import FloatingHotline from '../components/FloatingHotline';
+
 
 // Mock authentication - Replace with real auth later
 const isAuthenticated = () => {
@@ -28,7 +30,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function Orders() {
   const navigate = useNavigate();
-  const { data: orders, loading, error, refetch } = useFetch(() => api.orders.getAll());
+  const { data: orders, loading, error, refetch } = useFetch(() => api.orders.getAll(), []);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -117,9 +119,6 @@ export default function Orders() {
                           src={item.image}
                           alt={item.productName}
                           className="w-full h-full object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/64?text=Product';
-                          }}
                         />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -160,6 +159,7 @@ export default function Orders() {
           </div>
         )}
       </div>
+      <FloatingHotline phoneNumber="0123456789" />
     </main>
   );
 }

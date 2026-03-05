@@ -6,11 +6,9 @@ import AppRoutes from './routes';
 import './assets/index.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <CartProvider>
-        <AppRoutes />
-      </CartProvider>
-    </BrowserRouter>
-  </React.StrictMode>
+  <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <CartProvider>
+      <AppRoutes />
+    </CartProvider>
+  </BrowserRouter>
 );

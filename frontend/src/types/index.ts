@@ -104,7 +104,7 @@ export function getProductImages(product: Product): string[] {
   if (product.images && product.images.length > 0) {
     return product.images;
   }
-  return ['https://via.placeholder.com/400x400?text=Product'];
+  return [];
 }
 
 // Helper to format price with Vietnamese thousand separator

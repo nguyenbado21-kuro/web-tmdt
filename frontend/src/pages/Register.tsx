@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 import { api } from '../services/api';
+import FloatingHotline from '../components/FloatingHotline';
+
 
 export default function Register() {
   const navigate = useNavigate();
@@ -79,6 +81,9 @@ export default function Register() {
         
         // Trigger storage event for other components to update
         window.dispatchEvent(new Event('storage'));
+        
+        // Trigger custom event for cart to reload
+        window.dispatchEvent(new Event('userChanged'));
         
         console.log('Redirecting to home');
         navigate('/');
@@ -271,6 +276,7 @@ export default function Register() {
           </Link>
         </p>
       </div>
+      <FloatingHotline phoneNumber="0123456789" />
     </main>
   );
 }

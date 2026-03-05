@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import Button from '../components/Button';
+import FloatingHotline from '../components/FloatingHotline';
+
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -94,6 +96,9 @@ export default function Profile() {
     
     // Trigger storage event for other components to update
     window.dispatchEvent(new Event('storage'));
+    
+    // Trigger custom event for cart to reload (will load guest cart)
+    window.dispatchEvent(new Event('userChanged'));
     
     navigate('/');
   };
@@ -351,6 +356,7 @@ export default function Profile() {
           Đăng xuất
         </Button>
       </div>
+      <FloatingHotline phoneNumber="0123456789" />
     </main>
   );
 }

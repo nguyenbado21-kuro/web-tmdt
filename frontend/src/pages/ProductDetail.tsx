@@ -1,15 +1,21 @@
 import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { useFetch } from '../hooks/useFetch';
 import { useCart } from '../store/cartContext';
 import { getProductImages, formatPrice } from '../types';
 import LoadingSpinner, { ErrorState } from '../components/LoadingSpinner';
 import Button from '../components/Button';
+import deliveryIcon from '../assets/delivery.png'
+import changeIcon from '../assets/change.png'
+import secureIcon from '../assets/lock.png'
+import FloatingHotline from '../components/FloatingHotline';
+
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
   const { addToCart } = useCart();
+  const navigate = useNavigate();
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const [imgIdx, setImgIdx] = useState(0);
@@ -20,16 +26,38 @@ export default function ProductDetail() {
     [id]
   );
 
+  // Fallback: Always fetch some products for related section
+  const { data: allProducts } = useFetch(() => api.products.getAllFromCategories(), []);
+
   const { data: relatedProducts } = useFetch(
-    () => product ? api.products.getAll({ categoryId: product.categoryId }) : Promise.resolve({ success: true, data: [] }),
-    [product?.categoryId]
+    () => {
+      if (!product) return Promise.resolve({ success: true, data: [] });
+      
+      // Try to get products from same category first
+      const categoryId = product.category_id || product.categoryId;
+      if (categoryId) {
+        return api.products.getAll({ categoryId: categoryId.toString() });
+      }
+      
+      // Fallback: get all products if no category
+      return api.products.getAllFromCategories();
+    },
+    [product?.id] // Only depend on product ID to avoid infinite loops
   );
+
+  // Use related products if available, otherwise use all products
+  const displayProducts = relatedProducts && relatedProducts.length > 0 ? relatedProducts : allProducts;
 
   const handleAddToCart = () => {
     if (!product) return;
     addToCart(product, qty);
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
+  };
+
+  const handleViewAllProducts = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigate('/shop');
   };
 
   if (loading) return <LoadingSpinner />;
@@ -60,7 +88,6 @@ export default function ProductDetail() {
               src={images[imgIdx] ?? images[0]}
               alt={product.name}
               className="w-full h-full object-cover"
-              onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/600?text=Product'; }}
             />
           </div>
           {images.length > 1 && (
@@ -100,22 +127,15 @@ export default function ProductDetail() {
           {/* Price */}
           <div className="flex items-baseline gap-3 mb-6">
             <span className="text-4xl font-bold text-gray-900">
-              {(salePrice || currentPrice).toLocaleString('vi-VN')}₫
+              {formatPrice(salePrice || currentPrice)}₫
             </span>
             {salePrice && (
-              <span className="text-xl text-gray-400 line-through">{currentPrice.toLocaleString('vi-VN')}₫</span>
+              <span className="text-xl text-gray-400 line-through">{formatPrice(currentPrice)}₫</span>
             )}
           </div>
 
           <p className="text-gray-600 leading-relaxed mb-8">{product.meta || product.description}</p>
 
-          {/* Stock */}
-          <div className="flex items-center gap-2 mb-6 text-sm">
-            <div className={`w-2 h-2 rounded-full ${(product.stock || 0) > 0 ? 'bg-green-500' : 'bg-red-500'}`} />
-            <span className={(product.stock || 0) > 0 ? 'text-green-600' : 'text-red-600'}>
-              {(product.stock || 0) > 0 ? `Còn hàng (${product.stock} sản phẩm)` : 'Hết hàng'}
-            </span>
-          </div>
 
           {/* Quantity + Add to Cart */}
           <div className="flex items-center gap-4">
@@ -125,12 +145,12 @@ export default function ProductDetail() {
                 −
               </button>
               <span className="w-10 text-center font-semibold">{qty}</span>
-              <button onClick={() => setQty(Math.min(product.stock || 0, qty + 1))}
+              <button onClick={() => setQty(qty + 1)}
                 className="w-10 h-10 flex items-center justify-center hover:bg-gray-50 text-lg font-bold transition-colors">
                 +
               </button>
             </div>
-            <Button size="lg" onClick={handleAddToCart} disabled={(product.stock || 0) === 0}
+            <Button size="lg" onClick={handleAddToCart}
               className="flex-1">
               {added ? '✓ Đã thêm!' : 'Thêm vào giỏ'}
             </Button>
@@ -139,12 +159,14 @@ export default function ProductDetail() {
           {/* Trust badges */}
           <div className="grid grid-cols-3 gap-3 mt-8 pt-8 border-t border-gray-100">
             {[
-              ['🚚', 'Miễn phí vận chuyển', 'Đơn hàng trên 5 triệu'],
-              ['🔄', 'Đổi trả dễ dàng', 'Bảo hành 30 ngày'],
-              ['🔒', 'Thanh toán an toàn', 'Mã hóa SSL'],
+              [ deliveryIcon, 'Miễn phí vận chuyển', 'Đơn hàng trên 5 triệu'],
+              [changeIcon, 'Đổi trả dễ dàng', 'Bảo hành 30 ngày'],
+              [secureIcon, 'Thanh toán an toàn', 'Mã hóa SSL'],
             ].map(([icon, title, sub]) => (
               <div key={title} className="text-center p-3 bg-gray-50 rounded-xl">
-                <div className="text-2xl mb-1">{icon}</div>
+                <div className="flex justify-center mb-2">
+                  <img src={icon} alt={title} className="w-10 h-8" />
+                </div>
                 <div className="text-xs font-semibold text-gray-700">{title}</div>
                 <div className="text-xs text-gray-400 mt-0.5">{sub}</div>
               </div>
@@ -256,7 +278,7 @@ export default function ProductDetail() {
                 </div>
                 <div className="flex py-3 border-b border-gray-100">
                   <span className="text-gray-500 w-40">Bảo hành</span>
-                  <span className="text-gray-900 font-medium">60 tháng</span>
+                  <span className="text-gray-900 font-medium">12 tháng</span>
                 </div>
                 <div className="flex py-3 border-b border-gray-100">
                   <span className="text-gray-500 w-40">Gửi từ</span>
@@ -356,7 +378,10 @@ export default function ProductDetail() {
       </div>
 
       {/* Related Products */}
-      {relatedProducts && relatedProducts.length > 1 && (
+      {(() => {
+        const filteredProducts = displayProducts?.filter((p: any) => p.id !== product?.id) || [];
+        return filteredProducts.length > 0;
+      })() && (
         <div className="mt-20">
           <div className="text-center mb-12">
             <span className="text-sm font-semibold text-brand-500 uppercase tracking-wider">Sản phẩm tương tự</span>
@@ -369,7 +394,10 @@ export default function ProductDetail() {
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {relatedProducts.filter((p: any) => p.id !== product.id).slice(0, 4).map((p: any, index: number) => {
+            {displayProducts
+              ?.filter((p: any) => p.id !== product?.id) // Filter out current product
+              .slice(0, 4) // Take first 4 products
+              .map((p: any, index: number) => {
               const relatedImages = getProductImages(p);
               const relatedCurrentPrice = Number(p.price);
               const relatedSalePrice = p.price_sale && Number(p.price_sale) > 0 ? Number(p.price_sale) : null;
@@ -430,11 +458,11 @@ export default function ProductDetail() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-baseline gap-2">
                         <span className="text-lg font-bold text-brand-500">
-                          {(relatedSalePrice || relatedCurrentPrice).toLocaleString('vi-VN')}₫
+                          {formatPrice(relatedSalePrice || relatedCurrentPrice)}₫
                         </span>
                         {relatedSalePrice && (
                           <span className="text-sm text-gray-400 line-through">
-                            {relatedCurrentPrice.toLocaleString('vi-VN')}₫
+                            {formatPrice(relatedCurrentPrice)}₫
                           </span>
                         )}
                       </div>
@@ -456,18 +484,19 @@ export default function ProductDetail() {
           
           {/* View all button */}
           <div className="text-center mt-12">
-            <Link 
-              to="/shop" 
+            <button 
+              onClick={handleViewAllProducts}
               className="inline-flex items-center gap-2 px-8 py-3 bg-gray-100 hover:bg-brand-500 text-gray-700 hover:text-white rounded-full font-semibold transition-all duration-300 group"
             >
               Xem tất cả sản phẩm
               <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
               </svg>
-            </Link>
+            </button>
           </div>
         </div>
       )}
+      <FloatingHotline phoneNumber="0123456789" />
     </main>
   );
 }
