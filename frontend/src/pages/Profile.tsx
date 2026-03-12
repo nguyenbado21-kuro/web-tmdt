@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../store/authContext';
 import { api } from '../services/api';
 import Button from '../components/Button';
 import FloatingHotline from '../components/FloatingHotline';
@@ -7,6 +8,7 @@ import FloatingHotline from '../components/FloatingHotline';
 
 export default function Profile() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [user, setUser] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -48,7 +50,7 @@ export default function Profile() {
             phone: parsedUser.phone || userPhone || '',
           });
         } catch (err) {
-          console.error('Error parsing user data:', err);
+          // Silent error handling
         }
       } else if (userPhone) {
         // Create minimal user object with phone
@@ -76,12 +78,10 @@ export default function Profile() {
           localStorage.setItem('userData', JSON.stringify(freshUserData));
         }
       } catch (apiError) {
-        // API call failed, but we already have data from localStorage, so continue
-        console.log('API call failed, using localStorage data');
+        // API call failed, using localStorage data
       }
       
     } catch (error) {
-      console.error('Error loading user data:', error);
       setError('Không thể tải thông tin người dùng');
     } finally {
       setLoading(false);
@@ -89,17 +89,7 @@ export default function Profile() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userPhone');
-    localStorage.removeItem('userData');
-    
-    // Trigger storage event for other components to update
-    window.dispatchEvent(new Event('storage'));
-    
-    // Trigger custom event for cart to reload (will load guest cart)
-    window.dispatchEvent(new Event('userChanged'));
-    
+    logout();
     navigate('/');
   };
 
@@ -139,7 +129,7 @@ export default function Profile() {
             return;
           }
         } catch (apiError) {
-          console.log('API update failed, updating localStorage only');
+          // API update failed, updating localStorage only
         }
       }
 
@@ -160,7 +150,6 @@ export default function Profile() {
       setTimeout(() => setSuccess(''), 3000);
       
     } catch (error) {
-      console.error('Error updating profile:', error);
       setError('Có lỗi xảy ra khi cập nhật thông tin');
     } finally {
       setLoading(false);
@@ -169,8 +158,8 @@ export default function Profile() {
 
   if (loading && !user && !form.phone) {
     return (
-      <main className="min-h-[calc(100vh-400px)] py-12 px-4">
-        <div className="max-w-3xl mx-auto">
+      <main className="min-h-[calc(100vh-400px)] py-12 px-4 w-full">
+        <div className="w-full max-w-screen-xl mx-auto">
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
             <span className="ml-3 text-gray-600">Đang tải thông tin...</span>
@@ -181,8 +170,8 @@ export default function Profile() {
   }
 
   return (
-    <main className="min-h-[calc(100vh-400px)] py-12 px-4">
-      <div className="max-w-3xl mx-auto">
+    <main className="min-h-[calc(100vh-400px)] py-12 px-4 w-full">
+      <div className="w-full max-w-screen-xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <h1 className="font-display text-3xl font-bold text-gray-900 mb-2">

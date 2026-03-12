@@ -22,7 +22,6 @@ export default function Register() {
     e.preventDefault();
     setError('');
 
-    // Validation
     if (form.password !== form.confirmPassword) {
       setError('Mật khẩu xác nhận không khớp');
       return;
@@ -41,63 +40,49 @@ export default function Register() {
     setLoading(true);
 
     try {
-      console.log('Attempting register with:', { phone: form.phone, name: form.name, email: form.email });
       const response = await api.auth.register({
-        phone: form.phone,
+        phone: form.phone.trim(),
         pass: form.password,
-        name: form.name,
-        email: form.email,
+        name: form.name.trim(),
+        email: form.email.trim(),
       }) as any;
-      console.log('Register response:', response);
-      console.log('Response status:', response.status);
-      console.log('Response message:', response.message);
 
-      // API can return different formats:
-      // Success: { error: "success", data: {...} } or { status: 1, message: "success", data: {...} }
-      const isSuccess = response.error === 'success' ||
-                       response.status === 1 || 
-                       (response.message === 'success' && !response.status) ||
-                       (response.message === 'success' && response.status !== 0);
-      
-      if (response && isSuccess && response.data) {
-        console.log('✅ Registration successful!');
-        
-        // Save login state after successful registration
-        localStorage.setItem('isLoggedIn', 'true');
-        
-        // Get data from response
-        const data = response.data || response;
-        console.log('Register data:', data);
-        
-        if (data.token) {
-          localStorage.setItem('authToken', data.token);
+      const isSuccess =response?.success === true;
+
+
+      if (isSuccess && response?.data) {
+        const data = response.data;
+
+        localStorage.setItem('userPhone', data.phone || form.phone.trim());
+        localStorage.setItem('userData', JSON.stringify(data));
+
+        if (data.token_user) {
+          localStorage.setItem('isLoggedIn', 'true');
+          localStorage.setItem('authToken', data.token_user);
+
+          window.dispatchEvent(new Event('storage'));
+          window.dispatchEvent(new Event('userChanged'));
+          navigate('/');
+        } else {
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('isLoggedIn');
+
+          window.dispatchEvent(new Event('storage'));
+          window.dispatchEvent(new Event('userChanged'));
+          navigate('/login');
         }
-        
-        localStorage.setItem('userPhone', form.phone);
-        
-        if (data.user || data.id) {
-          localStorage.setItem('userData', JSON.stringify(data.user || data));
-        }
-        
-        // Trigger storage event for other components to update
-        window.dispatchEvent(new Event('storage'));
-        
-        // Trigger custom event for cart to reload
-        window.dispatchEvent(new Event('userChanged'));
-        
-        console.log('Redirecting to home');
-        navigate('/');
       } else {
-        // Registration failed - show error message from API
-        const errorMsg = response.message && response.message !== 'success' 
-          ? response.message 
-          : (response.error || 'Đăng ký thất bại. Vui lòng thử lại');
-        console.error('Registration failed:', errorMsg);
-        setError(errorMsg);
+        setError(response?.message || 'Đăng ký thất bại. Vui lòng thử lại.');
       }
-    } catch (err) {
-      console.error('Register error:', err);
-      setError('Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại.');
+    } catch (err: any) {
+      const statusCode = err?.response?.status;
+      const errorData = err?.response?.data;
+
+      if (statusCode === 403 && errorData?.code === 2) {
+        setError(errorData?.message || 'Số điện thoại đã tồn tại trong hệ thống, vui lòng đăng nhập');
+      } else {
+        setError(errorData?.message || 'Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại.');
+      }
     } finally {
       setLoading(false);
     }

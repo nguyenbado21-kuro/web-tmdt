@@ -6,7 +6,7 @@ import { Category, Product } from '../types';
 import ProductCard from '../components/ProductCard';
 import SectionTitle from '../components/SectionTitle';
 import LoadingSpinner, { ErrorState } from '../components/LoadingSpinner';
-import FloatingHotline from '../components/FloatingHotline';
+import FloatingButtons from '../components/FloatingButtons';
 
 export default function Shop() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -77,8 +77,8 @@ export default function Shop() {
   return (
     <main className="min-h-screen bg-white">
       {/* Shop header */}
-      <div className="bg-gray-50 border-b border-gray-100 py-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="bg-gray-50 border-b border-gray-100 py-10 w-full">
+        <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionTitle tag="Tất cả sản phẩm" title="Khám phá" highlight="Bộ sưu tập của chúng tôi" />
 
           {/* Search bar */}
@@ -98,7 +98,7 @@ export default function Shop() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="flex flex-col lg:flex-row gap-8">
 
           {/* Sidebar filters */}
@@ -155,8 +155,8 @@ export default function Shop() {
           </div>
         </div>
       </div>
-      {/* Floating hotline button */}
-      <FloatingHotline phoneNumber="0123456789" />
+      {/* Floating buttons */}
+      <FloatingButtons phoneNumber="0123456789" />
     </main>
   );
 }

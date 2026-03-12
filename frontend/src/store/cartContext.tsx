@@ -82,7 +82,7 @@ function saveCartToStorage(items: CartItem[]) {
     const data = JSON.stringify(items);
     localStorage.setItem(storageKey, data);
   } catch (error) {
-    console.error('Error saving cart to storage:', error);
+    // Silent error handling
   }
 }
 
@@ -92,7 +92,6 @@ function loadCartFromStorage(): CartItem[] {
     const saved = localStorage.getItem(storageKey);
     return saved ? JSON.parse(saved) : [];
   } catch (error) {
-    console.error('Error loading cart from storage:', error);
     return [];
   }
 }

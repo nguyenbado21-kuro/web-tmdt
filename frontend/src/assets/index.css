@@ -3,23 +3,73 @@
 @tailwind utilities;
 
 @layer base {
-  * { box-sizing: border-box; }
-  body { @apply font-sans text-gray-900 bg-white antialiased; }
+  * { 
+    box-sizing: border-box;
+  }
+  html, body { 
+    @apply font-sans text-gray-900 bg-white antialiased;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
+    position: relative;
+  }
   h1, h2, h3 { @apply font-display; }
+  
+  /* Prevent horizontal overflow */
+  #root {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+    position: relative;
+  }
+  
+  /* Ensure all containers respect viewport width */
+  .container, section, div, main, header, footer {
+    max-width: 100%;
+  }
+  
+  /* Prevent images from overflowing */
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  /* Specific fixes for common overflow causes */
+  .absolute {
+    contain: layout;
+  }
+  
+  /* Mobile-specific fixes */
+  @media (max-width: 768px) {
+    body {
+      font-size: 14px;
+      padding-bottom: 120px; /* Space for glassmorphism bottom bar */
+    }
+    
+    /* Ensure no element causes horizontal scroll */
+    * {
+      max-width: 100vw;
+    }
+    
+    /* Fix for floating elements on mobile */
+    .fixed {
+      max-width: calc(100vw - 16px);
+    }
+  }
 }
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center gap-2 px-6 py-3 bg-brand-500 text-white font-semibold rounded-full
+    @apply inline-flex items-center gap-1.5 sm:gap-2 px-4 py-2 sm:px-6 sm:py-3 bg-brand-500 text-white font-semibold rounded-full
            hover:bg-brand-600 active:bg-brand-700 transition-all duration-300 shadow-md hover:shadow-xl
-           hover:-translate-y-1 hover:scale-105 active:scale-95;
+           hover:-translate-y-1 hover:scale-105 active:scale-95 text-sm sm:text-base;
   }
   .btn-outline {
-    @apply inline-flex items-center gap-2 px-6 py-3 border-2 border-brand-500 text-brand-500 font-semibold
-           rounded-full hover:bg-brand-50 transition-all duration-300 hover:scale-105 active:scale-95;
+    @apply inline-flex items-center gap-1.5 sm:gap-2 px-4 py-2 sm:px-6 sm:py-3 border-2 border-brand-500 text-brand-500 font-semibold
+           rounded-full hover:bg-brand-50 transition-all duration-300 hover:scale-105 active:scale-95 text-sm sm:text-base;
   }
   .card {
-    @apply bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden
+    @apply bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden
            hover:shadow-xl transition-all duration-300 hover:-translate-y-1;
   }
   
@@ -48,6 +98,18 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+  
+  /* Debug utility - remove in production */
+  .debug-overflow {
+    outline: 1px solid red !important;
+    overflow: hidden !important;
+    max-width: 100% !important;
+  }
+  
+  /* Force contain all absolute positioned elements */
+  .contain-layout {
+    contain: layout;
+  }
 }
 
 /* Smooth scroll */
@@ -66,6 +128,22 @@ html { scroll-behavior: smooth; }
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Success notification animation */
+@keyframes fadeInModal {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeInModal 0.3s ease-out forwards;
 }
 
 .animate-fadeIn {
@@ -198,6 +276,245 @@ html { scroll-behavior: smooth; }
   100% { transform: translateY(-10px); }
 }
 
+/* Burger menu animations */
+@keyframes slideDownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUpFade {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes burgerToX {
+  0% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-90deg);
+  }
+  100% {
+    transform: rotate(-45deg);
+  }
+}
+
+@keyframes xToBurger {
+  0% {
+    transform: rotate(-45deg);
+  }
+  50% {
+    transform: rotate(-90deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.animate-slide-down-fade {
+  animation: slideDownFade 0.3s ease-out forwards;
+}
+
+.animate-slide-up-fade-out {
+  animation: slideUpFade 0.3s ease-out forwards;
+}
+
+.animate-burger-to-x {
+  animation: burgerToX 0.3s ease-out forwards;
+}
+
+.animate-x-to-burger {
+  animation: xToBurger 0.3s ease-out forwards;
+}
+
+/* Burger menu lines animation */
+.burger-line {
+  transition: all 0.3s ease;
+  transform-origin: center;
+}
+
+.burger-line-1 {
+  transform: translateY(0) rotate(0deg);
+}
+
+.burger-line-2 {
+  opacity: 1;
+}
+
+.burger-line-3 {
+  transform: translateY(0) rotate(0deg);
+}
+
+.burger-open .burger-line-1 {
+  transform: translateY(6px) rotate(45deg);
+}
+
+.burger-open .burger-line-2 {
+  opacity: 0;
+}
+
+.burger-open .burger-line-3 {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+/* Mobile menu item animations */
+@keyframes menuItemSlide {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-menu-item {
+  animation: menuItemSlide 0.3s ease-out forwards;
+}
+
+/* Stagger delays for menu items */
+.menu-item-delay-1 { animation-delay: 0.1s; }
+.menu-item-delay-2 { animation-delay: 0.15s; }
+.menu-item-delay-3 { animation-delay: 0.2s; }
+.menu-item-delay-4 { animation-delay: 0.25s; }
+.menu-item-delay-5 { animation-delay: 0.3s; }
+.menu-item-delay-6 { animation-delay: 0.35s; }
+
+/* Product detail animations */
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes tabSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInFromRight 0.6s ease-out forwards;
+}
+
+.animate-slide-in-left {
+  animation: slideInFromLeft 0.6s ease-out forwards;
+}
+
+.animate-fade-in-scale {
+  animation: fadeInScale 0.5s ease-out forwards;
+}
+
+.animate-bounce-in {
+  animation: bounceIn 0.6s ease-out forwards;
+}
+
+.animate-slide-up-fade {
+  animation: slideUpFade 0.4s ease-out forwards;
+}
+
+.animate-tab-slide-in {
+  animation: tabSlideIn 0.3s ease-out forwards;
+}
+
+/* Stagger animation delays */
+.delay-75 { animation-delay: 0.075s; }
+.delay-150 { animation-delay: 0.15s; }
+.delay-225 { animation-delay: 0.225s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-375 { animation-delay: 0.375s; }
+.delay-450 { animation-delay: 0.45s; }
+
+/* Underline slide animation */
+@keyframes slideInUnderline {
+  from {
+    width: 0;
+    left: 0;
+  }
+  to {
+    width: 100%;
+    left: 0;
+  }
+}
+
+.animate-slide-underline {
+  animation: slideInUnderline 0.4s ease-out forwards;
+}
+
 /* Pulse glow effect */
 @keyframes pulse-glow {
   0%, 100% { 
@@ -210,4 +527,384 @@ html { scroll-behavior: smooth; }
 
 .pulse-glow {
   animation: pulse-glow 2s ease-in-out infinite;
+}
+/* Additional responsive utilities for mobile optimization */
+@layer utilities {
+  /* Mobile-first responsive text sizes */
+  .text-responsive-xs { @apply text-xs sm:text-sm; }
+  .text-responsive-sm { @apply text-sm sm:text-base; }
+  .text-responsive-base { @apply text-base sm:text-lg; }
+  .text-responsive-lg { @apply text-lg sm:text-xl; }
+  .text-responsive-xl { @apply text-xl sm:text-2xl; }
+  .text-responsive-2xl { @apply text-2xl sm:text-3xl; }
+  .text-responsive-3xl { @apply text-3xl sm:text-4xl; }
+  
+  /* Mobile-first responsive spacing */
+  .p-responsive { @apply p-3 sm:p-4 lg:p-6; }
+  .px-responsive { @apply px-3 sm:px-4 lg:px-6; }
+  .py-responsive { @apply py-3 sm:py-4 lg:py-6; }
+  .m-responsive { @apply m-3 sm:m-4 lg:m-6; }
+  .mx-responsive { @apply mx-3 sm:mx-4 lg:mx-6; }
+  .my-responsive { @apply my-3 sm:my-4 lg:my-6; }
+  
+  /* Mobile-first responsive gaps */
+  .gap-responsive { @apply gap-3 sm:gap-4 lg:gap-6; }
+  .gap-responsive-sm { @apply gap-2 sm:gap-3 lg:gap-4; }
+  .gap-responsive-lg { @apply gap-4 sm:gap-6 lg:gap-8; }
+  
+  /* Mobile-optimized containers */
+  .container-mobile {
+    @apply w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  /* Mobile-friendly card layouts */
+  .card-mobile {
+    @apply bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-3 sm:p-4 lg:p-6;
+  }
+  
+  /* Touch-friendly buttons */
+  .btn-touch {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+  }
+  
+  /* Mobile-optimized grid layouts */
+  .grid-mobile-1 { @apply grid grid-cols-1; }
+  .grid-mobile-2 { @apply grid grid-cols-1 sm:grid-cols-2; }
+  .grid-mobile-3 { @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3; }
+  .grid-mobile-4 { @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4; }
+  
+  /* Safe area utilities for mobile devices */
+  .safe-top { padding-top: env(safe-area-inset-top); }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+  .safe-left { padding-left: env(safe-area-inset-left); }
+  .safe-right { padding-right: env(safe-area-inset-right); }
+  
+  /* Prevent zoom on input focus (iOS) */
+  .no-zoom {
+    font-size: 16px !important;
+  }
+  
+  /* Mobile-optimized aspect ratios */
+  .aspect-mobile-square { @apply aspect-square; }
+  .aspect-mobile-video { @apply aspect-video; }
+  .aspect-mobile-photo { @apply aspect-[4/3]; }
+  
+  /* Mobile-friendly overflow handling */
+  .overflow-mobile-hidden { @apply overflow-hidden; }
+  .overflow-mobile-scroll { @apply overflow-auto; }
+  .overflow-x-mobile-scroll { @apply overflow-x-auto; }
+  .overflow-y-mobile-scroll { @apply overflow-y-auto; }
+}
+
+/* Mobile-specific media queries */
+@media (max-width: 640px) {
+  /* Ensure all text is readable on mobile */
+  body {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  
+  /* Optimize button sizes for touch */
+  button, .btn-primary, .btn-outline {
+    min-height: 44px;
+    padding: 12px 16px;
+  }
+  
+  /* Optimize form inputs for mobile */
+  input, textarea, select {
+    font-size: 16px; /* Prevents zoom on iOS */
+    min-height: 44px;
+  }
+  
+  /* Optimize modal and dropdown positioning */
+  .modal, .dropdown {
+    margin: 16px;
+    max-width: calc(100vw - 32px);
+  }
+  
+  /* Optimize table layouts for mobile */
+  table {
+    font-size: 14px;
+  }
+  
+  /* Optimize image galleries for mobile */
+  .image-gallery {
+    gap: 8px;
+  }
+  
+  /* Optimize navigation for mobile */
+  .nav-mobile {
+    padding: 12px 16px;
+  }
+}
+
+/* Tablet-specific optimizations */
+@media (min-width: 641px) and (max-width: 1024px) {
+  /* Optimize layouts for tablet */
+  .tablet-grid-2 { @apply grid-cols-2; }
+  .tablet-grid-3 { @apply grid-cols-3; }
+  
+  /* Optimize spacing for tablet */
+  .tablet-p-6 { @apply p-6; }
+  .tablet-gap-6 { @apply gap-6; }
+}
+
+/* High DPI display optimizations */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  /* Optimize images for retina displays */
+  img {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Landscape mobile optimizations */
+@media (max-height: 500px) and (orientation: landscape) {
+  /* Reduce vertical spacing in landscape mode */
+  .landscape-py-2 { @apply py-2; }
+  .landscape-my-2 { @apply my-2; }
+  
+  /* Optimize header height in landscape */
+  .header-landscape { @apply h-12; }
+}
+
+/* Dark mode support (if needed) */
+@media (prefers-color-scheme: dark) {
+  /* Add dark mode styles here if needed */
+}
+
+/* Liquid Glass Effect Styles */
+.liquid-glass-container {
+  position: relative;
+  border-radius: 32px;
+  overflow: hidden;
+  
+  /* Advanced backdrop blur with saturation */
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  
+  /* Multi-layer background for depth */
+  background: 
+    linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.4) 100%),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.3), transparent 50%);
+  
+  /* Subtle border with gradient */
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Shimmer animation overlay */
+.liquid-glass-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 0%,
+    transparent 40%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 60%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: liquid-shimmer 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes liquid-shimmer {
+  0%, 100% {
+    background-position: 200% 0;
+  }
+  50% {
+    background-position: -200% 0;
+  }
+}
+
+/* Top edge highlight (refraction effect) */
+.liquid-glass-edge-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.9) 20%,
+    rgba(255, 255, 255, 0.9) 80%,
+    transparent
+  );
+  pointer-events: none;
+}
+
+/* Button base styles */
+.liquid-glass-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.liquid-glass-button:active {
+  transform: scale(0.92);
+}
+
+/* Icon wrapper with liquid effect */
+.liquid-glass-icon-wrapper {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  
+  /* Layered shadows for depth */
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.15),
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.liquid-glass-button:hover .liquid-glass-icon-wrapper {
+  transform: scale(1.08) translateY(-2px);
+  box-shadow: 
+    0 8px 24px rgba(0, 0, 0, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* Blue gradient for Zalo */
+.liquid-glass-icon-blue {
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #2563eb 100%);
+}
+
+/* Darker blue gradient for Phone */
+.liquid-glass-icon-blue-dark {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
+}
+
+/* Green gradient for Zalo (alternative) */
+.liquid-glass-icon-green {
+  background: linear-gradient(135deg, #34d399 0%, #10b981 50%, #059669 100%);
+}
+
+/* Darker green gradient for Phone (alternative) */
+.liquid-glass-icon-green-dark {
+  background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
+}
+
+/* Refraction effect (chromatic aberration simulation) */
+.liquid-glass-refraction {
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.1) 40%,
+    transparent 70%
+  );
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+/* Inner glow effect */
+.liquid-glass-inner-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 255, 255, 0.3) 0%,
+    transparent 60%
+  );
+  pointer-events: none;
+  animation: liquid-pulse 2s ease-in-out infinite;
+}
+
+@keyframes liquid-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+/* Label text styling */
+.liquid-glass-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #374151;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.02em;
+}
+
+/* Elastic bounce on tap */
+@keyframes liquid-bounce {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.92);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.liquid-glass-button:active .liquid-glass-icon-wrapper {
+  animation: liquid-bounce 0.3s ease-out;
+}
+
+/* Support for browsers without backdrop-filter */
+@supports not (backdrop-filter: blur(20px)) {
+  .liquid-glass-container {
+    background: rgba(255, 255, 255, 0.85);
+  }
+}
+
+/* High contrast mode adjustments */
+@media (prefers-contrast: high) {
+  .liquid-glass-container {
+    border: 2px solid rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.95);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .liquid-glass-shimmer,
+  .liquid-glass-inner-glow {
+    animation: none;
+  }
+  
+  .liquid-glass-button,
+  .liquid-glass-icon-wrapper {
+    transition: none;
+  }
+}
+
+/* Print styles */
+@media print {
+  /* Optimize for printing */
+  .no-print { display: none !important; }
+  .print-block { display: block !important; }
+  
+  /* Remove shadows and animations for print */
+  * {
+    box-shadow: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
 }

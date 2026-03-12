@@ -1,10 +1,13 @@
 import { Link } from 'react-router-dom';
-import logo from '../assets/logo.png';  
+import logo from '../assets/logo.png';
+import facebookIcon from '../assets/Facebook_icon.png';
+import youtubeIcon from '../assets/YouTube.png';
+import zaloIcon from '../assets/Icon_of_Zalopng.png';  
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-900 text-white pt-16 pb-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <footer className="bg-gray-900 text-white pt-16 pb-8 w-full">
+      <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
 
           {/* Brand */}
@@ -20,11 +23,27 @@ export default function Footer() {
               Công nghệ lọc nước tiên tiến từ Mỹ. Mang nước sạch - an toàn - giàu khoáng chất đến mọi gia đình Việt Nam.
             </p>
             <div className="flex gap-3 mt-5">
-              {['F', 'Y', 'Z', 'T'].map((s, i) => (
-                <a key={i} href="#" className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center hover:bg-green-600 transition-colors">
-                  <span className="text-xs font-bold">{s}</span>
-                </a>
-              ))}
+              <a href="https://www.facebook.com/nano.geyser.official" className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors p-1.5">
+                <img 
+                  src={facebookIcon} 
+                  alt="Facebook" 
+                  className="w-full h-full object-contain"
+                />
+              </a>
+              <a href="https://www.youtube.com/@maylocnuocnanogeyser_official" className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center hover:bg-red-600 transition-colors p-1.5">
+                <img 
+                  src={youtubeIcon} 
+                  alt="YouTube" 
+                  className="w-full h-full object-contain"
+                />
+              </a>
+              <a href="#" className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center hover:bg-blue-500 transition-colors p-1.5">
+                <img 
+                  src={zaloIcon} 
+                  alt="Zalo" 
+                  className="w-full h-full object-contain"
+                />
+              </a>
             </div>
           </div>
 

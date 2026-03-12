@@ -63,10 +63,12 @@ export interface Order {
   userId: string;
   customerName: string;
   customerEmail: string;
+  customerPhone?: string;
   items: OrderItem[];
   totalPrice: number;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   address: string;
+  notes?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -77,6 +79,53 @@ export interface OrderItem {
   price: number;
   quantity: number;
   image: string;
+}
+
+// Retail Order from API
+export interface OrderDetail {
+  id: number;
+  product_id: string;
+  quantity: string;
+  unit_price: string;
+  amount: string;
+  product: {
+    id: number;
+    name: string;
+    price: string;
+    product_images: Array<{
+      link: string;
+      alt: string;
+    }>;
+  };
+}
+
+export interface RetailOrder {
+  id: number;
+  code: string;
+  order_date: string;
+  status: string;
+  notes: string;
+  order_user_name: string;
+  order_user_phone: string;
+  order_user_address: string;
+  customer_id: string;
+  orderdetails: OrderDetail[];
+  retail_payment: Array<{
+    amount: string;
+    status: string;
+  }>;
+}
+
+export interface Address {
+  id: string;
+  name: string;
+  phone: string;
+  province: string;
+  district: string;
+  ward: string;
+  detailAddress: string;
+  isDefault: boolean;
+  type: 'home' | 'office';
 }
 
 export interface ApiResponse<T> {
@@ -105,6 +154,19 @@ export function getProductImages(product: Product): string[] {
     return product.images;
   }
   return [];
+}
+
+// Voucher interface
+export interface Voucher {
+  id: number;
+  code: string;
+  type: string;
+  start_date: string;
+  end_date: string;
+  discount: string;
+  min_order_value: string;
+  quantity: string;
+  status: string;
 }
 
 // Helper to format price with Vietnamese thousand separator

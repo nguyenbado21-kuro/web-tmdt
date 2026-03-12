@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import Button from '../components/Button';
 import { api } from '../services/api';
-import FloatingHotline from '../components/FloatingHotline';
+import { useAuth } from '../store/authContext';
 
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [searchParams] = useSearchParams();
-  const redirectTo = searchParams.get('redirect') || '/';
+  const redirectTo = searchParams.get('returnUrl') || searchParams.get('redirect') || '/';
   
   const [form, setForm] = useState({ phone: '', password: '' });
   const [loading, setLoading] = useState(false);
@@ -20,52 +21,30 @@ export default function Login() {
     setLoading(true);
 
     try {
-      console.log('Attempting login with:', { phone: form.phone });
       const response = await api.auth.login(form.phone, form.password) as any;
-      console.log('Login response:', response);
       
-      // API returns: { success: false, error: "success", data: {...} }
-      // Check if error field is "success" (weird API design but that's what we have)
       const isSuccess = response.error === 'success' || 
                        response.status === 1 || 
                        response.success === true ||
                        (response.message === 'success' && response.data);
       
-      console.log('Is success?', isSuccess);
-      
       if (response && isSuccess && response.data) {
-        console.log('✅ Login successful!');
-        
-        // Save login state
-        localStorage.setItem('isLoggedIn', 'true');
-        
-        // Get data from response
         const data = response.data;
-        console.log('Login data:', data);
+        const token = data.token || data.access_token || data.authToken;
         
-        if (data.token) {
-          localStorage.setItem('authToken', data.token);
+        if (token) {
+          login(token, data);
+          localStorage.setItem('userPhone', form.phone);
+          window.dispatchEvent(new CustomEvent('authChanged'));
+          navigate(redirectTo);
+        } else {
+          setError('Không nhận được token từ server');
         }
-        
-        localStorage.setItem('userPhone', form.phone);
-        localStorage.setItem('userData', JSON.stringify(data));
-        
-        // Trigger storage event for other components to update
-        window.dispatchEvent(new Event('storage'));
-        
-        // Trigger custom event for cart to reload
-        window.dispatchEvent(new Event('userChanged'));
-        
-        console.log('Redirecting to:', redirectTo);
-        navigate(redirectTo);
       } else {
-        console.log('❌ Login failed');
         const errorMsg = (response.error && response.error !== 'success') ? response.error : 'Số điện thoại hoặc mật khẩu không đúng';
-        console.error('Login failed:', errorMsg);
         setError(errorMsg);
       }
     } catch (err) {
-      console.error('Login error:', err);
       setError('Đã xảy ra lỗi khi đăng nhập. Vui lòng thử lại.');
     } finally {
       setLoading(false);
@@ -185,7 +164,6 @@ export default function Login() {
           </Link>
         </p>
       </div>
-      <FloatingHotline phoneNumber="0123456789" />
     </main>
   );
 }
