@@ -75,17 +75,6 @@ export default function Checkout() {
       icon: '💵',
       description: 'Thanh toán bằng tiền mặt khi nhận hàng'
     },
-    {
-      id: 'momo',
-      name: 'Ví điện tử MoMo',
-      icon: '🔴',
-      description: 'Thanh toán qua ví MoMo'
-    },
-    {
-      id: 'vnpay',
-      name: 'VN Pay',
-      icon: '🔵'
-    }
   ];
 
   useEffect(() => {
@@ -212,6 +201,16 @@ export default function Checkout() {
       const response = await api.orders.create(formData);
 
       if (response.success) {
+        // If there's a transfer image and we have order ID, update it
+        if (transferImage && response.data?.id) {
+          try {
+            await api.orders.updateImage(response.data.id, transferImage);
+          } catch (error) {
+            console.error('Failed to upload transfer image:', error);
+            // Continue anyway, order is created
+          }
+        }
+        
         clearCart();
         setCheckoutStatus('success');
         setTimeout(() => {
@@ -231,25 +230,40 @@ export default function Checkout() {
     setSelectedAddress(address);
   };
 
-  const handleAddAddress = (addressData: Omit<Address, 'id'>) => {
-    const newAddress = addAddress(addressData);
-    setSelectedAddress(newAddress);
-    setShowAddressSelector(false);
-  };
-
-  const handleUpdateAddress = (updatedAddress: Address) => {
-    updateAddress(updatedAddress);
-    if (selectedAddress?.id === updatedAddress.id) {
-      setSelectedAddress(updatedAddress);
+  const handleAddAddress = async (addressData: Omit<Address, 'id'>) => {
+    try {
+      const newAddress = addAddress(addressData);
+      setSelectedAddress(newAddress);
+      setShowAddressSelector(false);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: 'Không thể thêm địa chỉ' };
     }
-    setShowAddressSelector(false);
   };
 
-  const handleDeleteAddress = (addressId: string) => {
-    deleteAddress(addressId);
-    if (selectedAddress?.id === addressId) {
-      const remainingAddresses = addresses.filter(addr => addr.id !== addressId);
-      setSelectedAddress(remainingAddresses.length > 0 ? remainingAddresses[0] : null);
+  const handleUpdateAddress = async (updatedAddress: Address) => {
+    try {
+      updateAddress(updatedAddress);
+      if (selectedAddress?.id === updatedAddress.id) {
+        setSelectedAddress(updatedAddress);
+      }
+      setShowAddressSelector(false);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: 'Không thể cập nhật địa chỉ' };
+    }
+  };
+
+  const handleDeleteAddress = async (addressId: string) => {
+    try {
+      deleteAddress(addressId);
+      if (selectedAddress?.id === addressId) {
+        const remainingAddresses = addresses.filter(addr => addr.id !== addressId);
+        setSelectedAddress(remainingAddresses.length > 0 ? remainingAddresses[0] : null);
+      }
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: 'Không thể xóa địa chỉ' };
     }
   };
 
@@ -269,8 +283,8 @@ export default function Checkout() {
         <h1 className="font-display text-2xl font-bold text-gray-900">Thanh toán</h1>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid lg:grid-cols-[1fr_400px] gap-8">
+        <div className="space-y-6">
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold text-gray-900 flex items-center gap-2">
@@ -389,15 +403,24 @@ export default function Checkout() {
             </div>
 
             <div className="mt-4 pt-4 border-t border-gray-100">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">Lời nhắn:</span>
-                <input
-                  type="text"
-                  placeholder="Lưu ý cho Người bán..."
-                  value={orderNote}
-                  onChange={(e) => setOrderNote(e.target.value)}
-                  className="flex-1 text-sm border-none outline-none placeholder-gray-400"
-                />
+              <label className="block mb-2">
+                <span className="text-sm font-medium text-gray-700">Ghi chú đơn hàng</span>
+              </label>
+              <textarea
+                placeholder="Nhập ghi chú cho đơn hàng (ví dụ: giao hàng giờ hành chính, gọi trước khi giao...)"
+                value={orderNote}
+                onChange={(e) => setOrderNote(e.target.value)}
+                rows={3}
+                maxLength={500}
+                className="w-full text-sm border border-gray-200 rounded-lg p-3 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 placeholder-gray-400 resize-none"
+              />
+              <div className="flex items-center justify-between mt-1">
+                <span className="text-xs text-gray-500">
+                  💡 Ghi chú sẽ được gửi đến người bán
+                </span>
+                <span className="text-xs text-gray-400">
+                  {orderNote.length}/500
+                </span>
               </div>
             </div>
           </div>
@@ -429,8 +452,8 @@ export default function Checkout() {
           </div>
         </div>
 
-        <div className="lg:col-span-1">
-          <div className="bg-white border border-gray-200 rounded-lg p-6 sticky top-24">
+        <div className="lg:block">
+          <div className="bg-white border border-gray-200 rounded-lg p-6 lg:sticky lg:top-24 shadow-lg lg:shadow-md transition-shadow duration-200">
             <h2 className="font-semibold text-gray-900 mb-4">Đơn hàng</h2>
 
             <div className="space-y-3 text-sm mb-6">

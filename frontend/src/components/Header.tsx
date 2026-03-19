@@ -18,9 +18,41 @@ export default function Header() {
   const [productsDropdownOpen, setProductsDropdownOpen] = useState(false);
   const [searchSuggestions, setSearchSuggestions] = useState<Product[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [userName, setUserName] = useState<string>('');
   const searchRef = useRef<HTMLDivElement>(null);
 
   const { data: categories } = useFetch(() => api.categories.getAll(), []);
+
+  // Load user name from localStorage
+  useEffect(() => {
+    const updateUserName = () => {
+      if (isLoggedIn) {
+        const userData = localStorage.getItem('userData');
+        if (userData) {
+          try {
+            const parsedUser = JSON.parse(userData);
+            const name = parsedUser.username || parsedUser.user.username || '';
+            setUserName(name);
+          } catch (e) {
+            setUserName('');
+          }
+        }
+      } else {
+        setUserName('');
+      }
+    };
+
+    updateUserName();
+
+    // Listen for storage changes (when user updates profile)
+    window.addEventListener('storage', updateUserName);
+    window.addEventListener('userDataUpdated', updateUserName);
+
+    return () => {
+      window.removeEventListener('storage', updateUserName);
+      window.removeEventListener('userDataUpdated', updateUserName);
+    };
+  }, [isLoggedIn]);
 
   // Search suggestions effect
   useEffect(() => {
@@ -169,7 +201,8 @@ export default function Header() {
 
               {/* Dropdown Menu */}
               {productsDropdownOpen && categories && (
-                <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-100 py-2 animate-fadeIn z-50 max-w-[calc(100vw-2rem)]">
+                <div className="absolute top-full left-0 w-64 animate-fadeIn z-50 max-w-[calc(100vw-2rem)] pt-2">
+                <div className="bg-white rounded-xl shadow-lg border border-gray-100 py-2">
                   {categories.map((cat: Category) => (
                     <button
                       key={cat.id}
@@ -179,11 +212,12 @@ export default function Header() {
                       <div className="flex items-center justify-between">
                         <span className="truncate">{cat.name}</span>
                         <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full shrink-0 ml-2">
-                          {(cat as any).productCount || 0}
+                          
                         </span>
                       </div>
                     </button>
                   ))}
+                </div>
                 </div>
               )}
             </div>
@@ -312,6 +346,11 @@ export default function Header() {
                 <svg className="w-6 h-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
+                {userName && (
+                  <span className="text-sm font-medium text-gray-700 max-w-[100px] truncate">
+                    {userName}
+                  </span>
+                )}
               </Link>
             ) : (
               <Link to="/login" className="hidden sm:block btn-primary !py-2 !px-4 !text-sm">Đăng nhập</Link>

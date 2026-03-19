@@ -352,7 +352,7 @@ export default function ProductDetail() {
                   {[
                     ['Thương hiệu', 'Nano Geyser'],
                     ['Công nghệ', 'Nano'],
-                    ['Bảo hành', '12 tháng'],
+                    ['Bảo hành', '60 tháng'],
                     ['Gửi từ', 'TP. Hà Nội'],
                     ['Đánh giá', `${product.rating || 0} ⭐ (${(product.reviewCount || 0)} đánh giá)`]
                   ].map(([label, value], index) => (
@@ -405,51 +405,13 @@ export default function ProductDetail() {
                 </div>
               </div>
 
-              {/* Sample Reviews */}
-              <div className="space-y-4">
-                {[
-                  {
-                    user: 'k*****e',
-                    date: '2026-02-14 14:46',
-                    rating: 5,
-                    variant: 'Killbus Spider, Fullbox',
-                    comment: 'Đúng với mô tả: Đúng\nChất lượng sản phẩm: Trên cả tuyệt vời\nShop thân thiện hỗ trợ khách nhiệt tình. Sẽ còn ủng hộ shop'
-                  },
-                  {
-                    user: '1ha200737',
-                    date: '2026-02-07 18:53',
-                    rating: 5,
-                    variant: 'Build&RabbitTank&Dây, Nobox',
-                    comment: 'Được shop tặng thêm 1 bottle nữa quá đã'
-                  },
-                  {
-                    user: 'jr46ukrp24',
-                    date: '2026-02-25 17:12',
-                    rating: 5,
-                    variant: 'Great Cross Z Dragon, Nobox',
-                    comment: 'Đúng với mô tả: tốt\nChất lượng sản phẩm: đẹp'
-                  }
-                ].map((review, idx) => (
-                  <div key={idx} className={`card p-6 transition-all duration-300 hover:shadow-xl hover:scale-[1.02] animate-slide-up-fade delay-${idx * 100}`}>
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <div className="font-semibold text-gray-900">{review.user}</div>
-                        <div className="text-sm text-gray-500">{review.date}</div>
-                      </div>
-                      <div className="flex">
-                        {[1, 2, 3, 4, 5].map((i) => (
-                          <svg key={i} width="16" height="16" viewBox="0 0 24 24"
-                            fill={i <= review.rating ? '#f59e0b' : 'none'} stroke="#f59e0b" strokeWidth="2"
-                            className="transition-all duration-300 hover:scale-110">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                          </svg>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="text-sm text-gray-500 mb-2">Phân loại hàng: {review.variant}</div>
-                    <p className="text-gray-700 whitespace-pre-line">{review.comment}</p>
-                  </div>
-                ))}
+              {/* Reviews List */}
+              <div className="text-center py-12 bg-gray-50 rounded-xl">
+                <svg className="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                </svg>
+                <p className="text-gray-500 text-lg font-medium">Chưa có đánh giá nào</p>
+                <p className="text-gray-400 text-sm mt-2">Hãy là người đầu tiên đánh giá sản phẩm này</p>
               </div>
             </div>
           )}
@@ -575,7 +537,7 @@ export default function ProductDetail() {
           </div>
         </div>
       )}
-      <FloatingButtons phoneNumber="0123456789" />
+      <FloatingButtons phoneNumber="038 690 2668" />
     </main>
   );
 }

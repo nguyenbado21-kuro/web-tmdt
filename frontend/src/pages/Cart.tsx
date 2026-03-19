@@ -212,7 +212,7 @@ export default function Cart() {
       )}
 
       {/* Floating buttons */}
-      <FloatingButtons phoneNumber="0123456789" />
+      <FloatingButtons phoneNumber="038 690 2668" />
 
       {/* Voucher Selector Modal */}
       {showVoucherSelector && (

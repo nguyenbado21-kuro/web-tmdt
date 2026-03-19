@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 import { api } from '../services/api';
-import FloatingHotline from '../components/FloatingHotline';
+import Toast from '../components/Toast';
 
 
 export default function Register() {
@@ -17,6 +17,7 @@ export default function Register() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,27 +50,27 @@ export default function Register() {
 
       const isSuccess =response?.success === true;
 
-
       if (isSuccess && response?.data) {
         const data = response.data;
 
         localStorage.setItem('userPhone', data.phone || form.phone.trim());
         localStorage.setItem('userData', JSON.stringify(data));
-
         if (data.token_user) {
           localStorage.setItem('isLoggedIn', 'true');
           localStorage.setItem('authToken', data.token_user);
 
           window.dispatchEvent(new Event('storage'));
           window.dispatchEvent(new Event('userChanged'));
-          navigate('/');
+          setToast({ message: 'Đăng ký thành công!', type: 'success' });
+          setTimeout(() => navigate('/'), 1500);
         } else {
           localStorage.removeItem('authToken');
           localStorage.removeItem('isLoggedIn');
 
           window.dispatchEvent(new Event('storage'));
           window.dispatchEvent(new Event('userChanged'));
-          navigate('/login');
+          setToast({ message: 'Đăng ký thành công! Vui lòng đăng nhập.', type: 'success' });
+          setTimeout(() => navigate('/login'), 1500);
         }
       } else {
         setError(response?.message || 'Đăng ký thất bại. Vui lòng thử lại.');
@@ -89,20 +90,28 @@ export default function Register() {
   };
 
   return (
-    <main className="min-h-[calc(100vh-400px)] flex items-center justify-center py-12 px-4">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="font-display text-3xl font-bold text-gray-900 mb-2">
-            Đăng ký tài khoản
-          </h1>
-          <p className="text-gray-600">
-            Tạo tài khoản để trải nghiệm dịch vụ tốt nhất
-          </p>
-        </div>
+    <>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+      <main className="min-h-[calc(100vh-400px)] flex items-center justify-center py-12 px-4">
+        <div className="w-full max-w-md">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="font-display text-3xl font-bold text-gray-900 mb-2">
+              Đăng ký tài khoản
+            </h1>
+            <p className="text-gray-600">
+              Tạo tài khoản để trải nghiệm dịch vụ tốt nhất
+            </p>
+          </div>
 
-        {/* Form */}
-        <div className="card p-8">
+          {/* Form */}
+          <div className="card p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
@@ -251,17 +260,17 @@ export default function Register() {
               Facebook
             </button>
           </div>
-        </div>
 
-        {/* Login link */}
-        <p className="text-center mt-6 text-gray-600">
-          Đã có tài khoản?{' '}
-          <Link to="/login" className="text-brand-500 hover:text-brand-600 font-semibold">
-            Đăng nhập ngay
-          </Link>
-        </p>
+          {/* Login link */}
+          <p className="text-center mt-6 text-gray-600">
+            Đã có tài khoản?{' '}
+            <Link to="/login" className="text-brand-500 hover:text-brand-600 font-semibold">
+              Đăng nhập ngay
+            </Link>
+          </p>
+        </div>
       </div>
-      <FloatingHotline phoneNumber="0123456789" />
     </main>
+    </>
   );
 }

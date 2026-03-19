@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import Button from '../components/Button';
 import { api } from '../services/api';
 import { useAuth } from '../store/authContext';
+import Toast from '../components/Toast';
 
 
 export default function Login() {
@@ -14,6 +15,7 @@ export default function Login() {
   const [form, setForm] = useState({ phone: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +38,8 @@ export default function Login() {
           login(token, data);
           localStorage.setItem('userPhone', form.phone);
           window.dispatchEvent(new CustomEvent('authChanged'));
-          navigate(redirectTo);
+          setToast({ message: 'Đăng nhập thành công!', type: 'success' });
+          setTimeout(() => navigate(redirectTo), 1500);
         } else {
           setError('Không nhận được token từ server');
         }
@@ -52,8 +55,16 @@ export default function Login() {
   };
 
   return (
-    <main className="min-h-[calc(100vh-400px)] flex items-center justify-center py-12 px-4">
-      <div className="w-full max-w-md">
+    <>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+      <main className="min-h-[calc(100vh-400px)] flex items-center justify-center py-12 px-4">
+        <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="font-display text-3xl font-bold text-gray-900 mb-2">
@@ -165,5 +176,6 @@ export default function Login() {
         </p>
       </div>
     </main>
+    </>
   );
 }

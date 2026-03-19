@@ -241,7 +241,7 @@ export default function Orders() {
                 )}
 
                 {/* Delivery Address */}
-                <div className="bg-gray-50 rounded-lg p-4">
+                <div className="bg-gray-50 rounded-lg p-4 mb-4">
                   <div className="flex items-start gap-2">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400 mt-0.5 shrink-0">
                       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
@@ -263,12 +263,21 @@ export default function Orders() {
                     </div>
                   </div>
                 </div>
+
+                {/* Action Button */}
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => navigate(`/orders/${order.id}`)}
+                    className="btn-primary"
+                  >
+                    Chọn thợ
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         )}
       </div>
-      <FloatingHotline phoneNumber="0123456789" />
     </main>
   );
 }

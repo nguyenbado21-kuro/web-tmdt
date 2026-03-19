@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
-import logo from '../assets/logo.png';
 import facebookIcon from '../assets/Facebook_icon.png';
 import youtubeIcon from '../assets/YouTube.png';
-import zaloIcon from '../assets/Icon_of_Zalopng.png';  
+import zaloIcon from '../assets/Icon_of_Zalopng.png';
+import bocongthuongLogo from '../assets/bocongthuong.png';  
+import darklogo from  '../assets/logo-nano-dark.png';
 
 export default function Footer() {
   return (
@@ -14,7 +15,7 @@ export default function Footer() {
           <div className="col-span-1 sm:col-span-2 lg:col-span-1">
             <div className="mb-4">
               <img 
-                src={logo} 
+                src={darklogo} 
                 alt="Nano Geyser Logo" 
                 className="h-20 w-auto object-contain"
               />
@@ -47,32 +48,123 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Links */}
-          {[
-            { title: 'Sản phẩm', links: ['Máy lọc gia đình', 'Máy lọc công nghiệp', 'Phụ kiện & Lõi lọc', 'Khuyến mãi', 'Sản phẩm mới'] },
-            { title: 'Công ty', links: ['Về chúng tôi', 'Tin tức', 'Tuyển dụng', 'Đối tác', 'Liên hệ'] },
-            { title: 'Hỗ trợ', links: ['Trung tâm trợ giúp', 'Chính sách bảo hành', 'Vận chuyển & Lắp đặt', 'Hướng dẫn sử dụng', 'Tra cứu đơn hàng'] },
-          ].map((col) => (
-            <div key={col.title}>
-              <h4 className="font-semibold text-white mb-4">{col.title}</h4>
-              <ul className="space-y-2">
-                {col.links.map((l) => (
-                  <li key={l}>
-                    <Link to="/shop" className="text-gray-400 text-sm hover:text-white transition-colors">
-                      {l}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          {/* Sản phẩm */}
+          <div>
+            <h4 className="font-semibold text-white mb-4">Sản phẩm</h4>
+            <ul className="space-y-2">
+              <li>
+                <Link to="/shop" className="text-gray-400 text-sm hover:text-white transition-colors">
+                  Máy lọc gia đình
+                </Link>
+              </li>
+              <li>
+                <Link to="/shop" className="text-gray-400 text-sm hover:text-white transition-colors">
+                  Máy lọc công nghiệp
+                </Link>
+              </li>
+              <li>
+                <Link to="/shop" className="text-gray-400 text-sm hover:text-white transition-colors">
+                  Phụ kiện & Lõi lọc
+                </Link>
+              </li>
+              <li>
+                <Link to="/promotions" className="text-gray-400 text-sm hover:text-white transition-colors">
+                  Khuyến mãi
+                </Link>
+              </li>
+              <li>
+                <Link to="/shop" className="text-gray-400 text-sm hover:text-white transition-colors">
+                  Sản phẩm mới
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Công ty */}
+          <div>
+            <h4 className="font-semibold text-white mb-4">Công ty</h4>
+            <ul className="space-y-2">
+              <li>
+                <Link to="/" className="text-gray-400 text-sm hover:text-white transition-colors">
+                  Về chúng tôi
+                </Link>
+              </li>
+              <li>
+                <Link to="/" className="text-gray-400 text-sm hover:text-white transition-colors">
+                  Tin tức
+                </Link>
+              </li>
+              <li>
+                <Link to="/" className="text-gray-400 text-sm hover:text-white transition-colors">
+                  Tuyển dụng
+                </Link>
+              </li>
+              <li>
+                <Link to="/" className="text-gray-400 text-sm hover:text-white transition-colors">
+                  Đối tác
+                </Link>
+              </li>
+              <li>
+                <Link to="/" className="text-gray-400 text-sm hover:text-white transition-colors">
+                  Liên hệ
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Hỗ trợ */}
+          <div>
+            <h4 className="font-semibold text-white mb-4">Hỗ trợ</h4>
+            <ul className="space-y-2">
+              <li>
+                <Link to="/" className="text-gray-400 text-sm hover:text-white transition-colors">
+                  Trung tâm trợ giúp
+                </Link>
+              </li>
+              <li>
+                <Link to="/" className="text-gray-400 text-sm hover:text-white transition-colors">
+                  Chính sách bảo hành
+                </Link>
+              </li>
+              <li>
+                <Link to="/" className="text-gray-400 text-sm hover:text-white transition-colors">
+                  Vận chuyển & Lắp đặt
+                </Link>
+              </li>
+              <li>
+                <Link to="/" className="text-gray-400 text-sm hover:text-white transition-colors">
+                  Hướng dẫn sử dụng
+                </Link>
+              </li>
+              <li>
+                <Link to="/orders" className="text-gray-400 text-sm hover:text-white transition-colors">
+                  Tra cứu đơn hàng
+                </Link>
+              </li>
+            </ul>
+          </div>
         </div>
 
         <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-gray-500 text-sm">© 2024 Nano Geyser Vietnam. Bảo lưu mọi quyền.</p>
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <p className="text-gray-500 text-sm">© 2024 Nano Geyser Vietnam. Bảo lưu mọi quyền.</p>
+            <a 
+              href="http://online.gov.vn/Home/WebDetails/136086" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="hover:opacity-80 transition-opacity"
+              title="Đã thông báo Bộ Công Thương"
+            >
+              <img 
+                src={bocongthuongLogo} 
+                alt="Đã thông báo Bộ Công Thương" 
+                className="h-12 w-auto object-contain"
+              />
+            </a>
+          </div>
           <div className="flex gap-4 text-gray-500 text-sm">
-            <a href="#" className="hover:text-white transition-colors">Chính sách bảo mật</a>
-            <a href="#" className="hover:text-white transition-colors">Điều khoản dịch vụ</a>
+            <Link to="/" className="hover:text-white transition-colors">Chính sách bảo mật</Link>
+            <Link to="/" className="hover:text-white transition-colors">Điều khoản dịch vụ</Link>
           </div>
         </div>
       </div>

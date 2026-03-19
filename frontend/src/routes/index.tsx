@@ -8,6 +8,7 @@ import Checkout from '../pages/Checkout';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 import Orders from '../pages/Orders';
+import OrderDetail from '../pages/OrderDetail';
 import Profile from '../pages/Profile';
 import Promotions from '../pages/Promotions';
 
@@ -22,6 +23,7 @@ export default function AppRoutes() {
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/orders" element={<Orders />} />
+        <Route path="/orders/:id" element={<OrderDetail />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />

@@ -10,9 +10,12 @@ async function request<T>(
     const fullUrl = `${BASE_API}${url}`;
     const token = localStorage.getItem('auth_token');
 
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
+    const headers: Record<string, string> = {};
+    
+    // Only add Content-Type if body is not FormData
+    if (!(options.body instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+    }
 
     // Không gửi token cho login/register
     const isAuthRoute =
@@ -149,8 +152,18 @@ export const api = {
     create: (data: any) =>
       request<any>('/retailOrder/createRetailOrder', {
         method: 'POST',
-        body: JSON.stringify(data),
+        body: data instanceof FormData ? data : JSON.stringify(data),
       }),
+
+    updateImage: (orderId: string, image: File) => {
+      const formData = new FormData();
+      formData.append('images[]', image);
+      
+      return request<any>(`/retailOrder/${orderId}/updateRetailOrderImageBill`, {
+        method: 'PUT',
+        body: formData,
+      });
+    },
   },
 
   subscribers: {
@@ -192,11 +205,22 @@ export const api = {
         method: 'POST',
       }),
 
-    update: (id: string, data: any) =>
-      request<any>(`/user/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(data),
-      }),
+    update: (id: string, data: any) => {
+      const formData = new FormData();
+      formData.append('id', id);
+      
+      // Add other fields from data (name, email, addresses, etc.)
+      Object.keys(data).forEach(key => {
+        if (data[key] !== undefined && data[key] !== null) {
+          formData.append(key, data[key]);
+        }
+      });
+
+      return request<any>(`/user/updateUser`, {
+        method: 'POST',
+        body: formData,
+      });
+    },
 
     delete: (id: string) =>
       request<void>(`/user/${id}`, {

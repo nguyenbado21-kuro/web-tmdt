@@ -169,6 +169,19 @@ export interface Voucher {
   status: string;
 }
 
+// Technician interface
+export interface Technician {
+  id: number;
+  name: string;
+  phone: string;
+  email?: string;
+  avatar?: string;
+  rating?: number;
+  completed_orders?: number;
+  status: 'available' | 'busy' | 'offline';
+  specialties?: string[];
+}
+
 // Helper to format price with Vietnamese thousand separator
 export function formatPrice(price: number): string {
   return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');

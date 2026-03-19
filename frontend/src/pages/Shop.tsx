@@ -156,7 +156,7 @@ export default function Shop() {
         </div>
       </div>
       {/* Floating buttons */}
-      <FloatingButtons phoneNumber="0123456789" />
+      <FloatingButtons phoneNumber="038 690 2668" />
     </main>
   );
 }

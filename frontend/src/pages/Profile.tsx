@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../store/authContext';
 import { api } from '../services/api';
 import Button from '../components/Button';
-import FloatingHotline from '../components/FloatingHotline';
 
 
 export default function Profile() {
@@ -21,154 +20,221 @@ export default function Profile() {
   });
 
   useEffect(() => {
-    // Check if user is logged in
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
-    if (!isLoggedIn) {
-      navigate('/login?redirect=/profile');
+  const isLoggedIn = localStorage.getItem('isLoggedIn');
+
+  if (isLoggedIn !== 'true') {
+    navigate('/login?redirect=/profile');
+    return;
+  }
+
+  loadUserData();
+}, [navigate]);
+
+const normalizeResponse = (raw: any) => {
+  if (raw?.data?.code !== undefined || raw?.data?.message !== undefined) {
+    return raw.data;
+  }
+  return raw;
+};
+
+const isApiSuccess = (response: any) => {
+  return (
+    Number(response?.code) === 1 &&
+    String(response?.message || '').trim().toLowerCase() === 'success'
+  );
+};
+
+const loadUserData = async () => {
+  try {
+    setLoading(true);
+    setError('');
+
+    const userData = localStorage.getItem('userData');
+    const userPhone = localStorage.getItem('userPhone');
+
+    // Load from localStorage first
+    if (userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        console.log('Parsed user from localStorage:', parsedUser);
+        
+        // Handle different user data structures
+        const userId = parsedUser.id || parsedUser.user?.id;
+        const username = parsedUser.username || parsedUser.user.username || parsedUser.name || '';
+        const email = parsedUser.email || parsedUser.user?.email || '';
+        const phone = parsedUser.phone || parsedUser.user?.phone || userPhone || '';
+        
+        setUser({
+          ...parsedUser,
+          id: userId,
+          username,
+          email,
+          phone
+        });
+        
+        setForm({
+          name: username,
+          email: email,
+          phone: phone,
+        });
+      } catch (e) {
+        console.error('Error parsing userData:', e);
+      }
+    } else if (userPhone) {
+      const minimalUser = { phone: userPhone };
+      setUser(minimalUser);
+      setForm({
+        name: '',
+        email: '',
+        phone: userPhone,
+      });
+    }
+
+    // Fetch fresh data from API
+    try {
+      const rawResponse = await api.user.getCurrent();
+      const response = normalizeResponse(rawResponse);
+
+      console.log('API response:', response);
+
+      if (isApiSuccess(response) && response?.data) {
+        const freshUserData = response.data;
+
+        setUser(freshUserData);
+        setForm({
+          name: freshUserData.username || freshUserData.name || '',
+          email: freshUserData.email || '',
+          phone: freshUserData.phone || userPhone || '',
+        });
+
+        localStorage.setItem('userData', JSON.stringify(freshUserData));
+
+        if (freshUserData.phone) {
+          localStorage.setItem('userPhone', freshUserData.phone);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching user data:', err);
+      // lỗi API thì giữ dữ liệu localStorage
+    }
+  } catch (err) {
+    console.error('Error loading user data:', err);
+    setError('Không thể tải thông tin người dùng');
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleLogout = () => {
+  logout();
+  navigate('/');
+};
+
+const handleSave = async () => {
+  try {
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    const trimmedName = form.name.trim();
+    const trimmedEmail = form.email.trim();
+
+    if (!trimmedName) {
+      setError('Vui lòng nhập họ và tên');
+      setLoading(false);
       return;
     }
 
-    // Load user data from API
-    loadUserData();
-  }, [navigate]);
+    // Get user ID from multiple possible locations
+    let userId = user?.id || user?.user?.id;
+    
+    console.log('User object:', user);
+    console.log('User ID from state:', userId);
 
-  const loadUserData = async () => {
-    try {
-      setLoading(true);
-      
-      // First try to get from localStorage
-      const userData = localStorage.getItem('userData');
-      const userPhone = localStorage.getItem('userPhone');
-      
-      if (userData) {
-        try {
-          const parsedUser = JSON.parse(userData);
-          setUser(parsedUser);
-          setForm({
-            name: parsedUser.name || parsedUser.username || '',
-            email: parsedUser.email || '',
-            phone: parsedUser.phone || userPhone || '',
-          });
-        } catch (err) {
-          // Silent error handling
-        }
-      } else if (userPhone) {
-        // Create minimal user object with phone
-        const minimalUser = { phone: userPhone };
-        setUser(minimalUser);
-        setForm({ 
-          name: '',
-          email: '',
-          phone: userPhone 
-        });
-      }
-
-      // Try to fetch fresh data from API (optional, don't fail if it doesn't work)
+    // If no user ID, try to get from API first
+    if (!userId) {
       try {
-        const response = await api.user.getCurrent();
-        if (response.success && response.data) {
-          const freshUserData = response.data;
-          setUser(freshUserData);
-          setForm({
-            name: freshUserData.name || freshUserData.username || '',
-            email: freshUserData.email || '',
-            phone: freshUserData.phone || userPhone || '',
-          });
-          // Update localStorage with fresh data
-          localStorage.setItem('userData', JSON.stringify(freshUserData));
-        }
-      } catch (apiError) {
-        // API call failed, using localStorage data
-      }
-      
-    } catch (error) {
-      setError('Không thể tải thông tin người dùng');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
-
-  const handleSave = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      setSuccess('');
-
-      // Prepare update data
-      const updateData = {
-        name: form.name,
-        email: form.email,
-      };
-
-      // If we have user ID, try to update via API
-      if (user?.id) {
-        try {
-          const response = await api.user.update(user.id.toString(), updateData);
+        const rawResponse = await api.user.getCurrent();
+        const response = normalizeResponse(rawResponse);
+        
+        if (isApiSuccess(response) && response?.data) {
+          userId = response.data.id;
+          console.log('User ID from API:', userId);
           
-          if (response.success) {
-            // Update local state
-            const updatedUser = { 
-              ...user, 
-              name: form.name,
-              username: form.name, // Keep both for compatibility
-              email: form.email,
-            };
-            
-            setUser(updatedUser);
-            localStorage.setItem('userData', JSON.stringify(updatedUser));
-            setIsEditing(false);
-            setSuccess('Cập nhật thông tin thành công!');
-            
-            // Clear success message after 3 seconds
-            setTimeout(() => setSuccess(''), 3000);
-            return;
-          }
-        } catch (apiError) {
-          // API update failed, updating localStorage only
+          // Update user state with fresh data
+          setUser(response.data);
         }
+      } catch (err) {
+        console.error('Error fetching user ID:', err);
       }
+    }
 
-      // Fallback: Update localStorage only
-      const updatedUser = { 
-        ...user, 
-        name: form.name,
-        username: form.name,
-        email: form.email,
+    if (!userId) {
+      setError('Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.');
+      setLoading(false);
+      return;
+    }
+
+    const updateData = {
+      name: trimmedName,  // API expects 'name' field
+      email: trimmedEmail,
+    };
+
+    console.log('Updating user ID:', userId, 'with data:', updateData);
+
+    const rawResponse = await api.user.update(userId.toString(), updateData);
+    const response = normalizeResponse(rawResponse);
+
+    console.log('Update response:', response);
+
+    if (isApiSuccess(response)) {
+      // Merge updated data with existing user data
+      const updatedUser = {
+        ...user,
+        id: userId,
+        username: trimmedName,
+        name: trimmedName,
+        email: trimmedEmail,
       };
-      
+
       setUser(updatedUser);
+      setForm({
+        name: trimmedName,
+        email: trimmedEmail,
+        phone: user.phone || form.phone,
+      });
+
       localStorage.setItem('userData', JSON.stringify(updatedUser));
+
+      // Dispatch event to notify other components (like Header)
+      window.dispatchEvent(new Event('userDataUpdated'));
+
       setIsEditing(false);
       setSuccess('Cập nhật thông tin thành công!');
-      
-      // Clear success message after 3 seconds
       setTimeout(() => setSuccess(''), 3000);
-      
-    } catch (error) {
-      setError('Có lỗi xảy ra khi cập nhật thông tin');
-    } finally {
-      setLoading(false);
+    } else {
+      setError(response?.message || 'Cập nhật thông tin thất bại');
     }
-  };
-
-  if (loading && !user && !form.phone) {
-    return (
-      <main className="min-h-[calc(100vh-400px)] py-12 px-4 w-full">
-        <div className="w-full max-w-screen-xl mx-auto">
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
-            <span className="ml-3 text-gray-600">Đang tải thông tin...</span>
-          </div>
-        </div>
-      </main>
-    );
+  } catch (err: any) {
+    console.error('Error updating user:', err);
+    setError(err?.message || 'Có lỗi xảy ra khi cập nhật thông tin');
+  } finally {
+    setLoading(false);
   }
+};
 
+if (loading && !user && !form.phone) {
+  return (
+    <main className="min-h-[calc(100vh-400px)] py-12 px-4 w-full">
+      <div className="w-full max-w-screen-xl mx-auto">
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
+          <span className="ml-3 text-gray-600">Đang tải thông tin...</span>
+        </div>
+      </div>
+    </main>
+  );
+}
   return (
     <main className="min-h-[calc(100vh-400px)] py-12 px-4 w-full">
       <div className="w-full max-w-screen-xl mx-auto">
@@ -345,7 +411,6 @@ export default function Profile() {
           Đăng xuất
         </Button>
       </div>
-      <FloatingHotline phoneNumber="0123456789" />
     </main>
   );
 }
