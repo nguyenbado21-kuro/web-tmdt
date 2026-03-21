@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../store/cartContext';
 import { useAuth } from '../store/authContext';
@@ -25,6 +26,16 @@ export default function Header() {
   const { data: categories } = useFetch(() => api.categories.getAll(), []);
 
   const drawerSwipe = useSwipe(() => setMobileOpen(false), () => {});
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileOpen]);
 
   // Load user name from localStorage
   useEffect(() => {
@@ -374,12 +385,12 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile drawer */}
-      {mobileOpen && (
-        <div className="md:hidden fixed inset-0 z-50 flex">
+      {/* Mobile drawer - rendered via portal to escape sticky header stacking context */}
+      {mobileOpen && createPortal(
+        <div className="fixed inset-0 z-[9999] flex">
           {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/50"
             onClick={() => setMobileOpen(false)}
           />
           {/* Drawer */}
@@ -396,9 +407,26 @@ export default function Header() {
               </button>
             </div>
 
+            {/* Mobile search */}
+            <div className="px-3 py-3 border-b border-gray-100">
+              <form onSubmit={(e) => { handleSearch(e); setMobileOpen(false); }} className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-full px-4 py-2.5 w-full">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400 shrink-0">
+                  <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm sản phẩm..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="bg-transparent text-sm flex-1 outline-none text-gray-700 placeholder-gray-400"
+                  style={{ fontSize: '16px' }}
+                />
+              </form>
+            </div>
+
             <nav className="flex flex-col gap-1 px-3 py-4 flex-1">
-              <Link to="/" className="text-sm font-medium text-gray-700 py-2.5 px-3 rounded-lg hover:text-brand-500 hover:bg-gray-50 transition-colors" onClick={() => setMobileOpen(false)}>Trang chủ</Link>
-              <Link to="/shop" className="text-sm font-medium text-gray-700 py-2.5 px-3 rounded-lg hover:text-brand-500 hover:bg-gray-50 transition-colors" onClick={() => setMobileOpen(false)}>Sản phẩm</Link>
+              <Link to="/" className={`text-sm font-medium py-2.5 px-3 rounded-lg transition-colors ${isActivePath('/') ? 'text-brand-500 bg-green-50' : 'text-gray-700 hover:text-brand-500 hover:bg-gray-50'}`} onClick={() => setMobileOpen(false)}>Trang chủ</Link>
+              <Link to="/shop" className={`text-sm font-medium py-2.5 px-3 rounded-lg transition-colors ${isActivePath('/shop') || isActivePath('/product') ? 'text-brand-500 bg-green-50' : 'text-gray-700 hover:text-brand-500 hover:bg-gray-50'}`} onClick={() => setMobileOpen(false)}>Sản phẩm</Link>
 
               {categories && (
                 <div className="pl-4 space-y-1 border-l-2 border-gray-100 ml-3">
@@ -411,9 +439,16 @@ export default function Header() {
                 </div>
               )}
 
-              <Link to="/orders" className="text-sm font-medium text-gray-700 py-2.5 px-3 rounded-lg hover:text-brand-500 hover:bg-gray-50 transition-colors" onClick={() => setMobileOpen(false)}>Đơn hàng</Link>
-              <Link to="/promotions" className="text-sm font-medium text-gray-700 py-2.5 px-3 rounded-lg hover:text-brand-500 hover:bg-gray-50 transition-colors" onClick={() => setMobileOpen(false)}>Khuyến mãi</Link>
-              <Link to="/cart" className="text-sm font-medium text-gray-700 py-2.5 px-3 rounded-lg hover:text-brand-500 hover:bg-gray-50 transition-colors" onClick={() => setMobileOpen(false)}>Giỏ hàng</Link>
+              <Link to="/orders" className={`text-sm font-medium py-2.5 px-3 rounded-lg transition-colors ${isActivePath('/orders') ? 'text-brand-500 bg-green-50' : 'text-gray-700 hover:text-brand-500 hover:bg-gray-50'}`} onClick={() => setMobileOpen(false)}>Đơn hàng</Link>
+              <Link to="/promotions" className={`text-sm font-medium py-2.5 px-3 rounded-lg transition-colors ${isActivePath('/promotions') ? 'text-brand-500 bg-green-50' : 'text-gray-700 hover:text-brand-500 hover:bg-gray-50'}`} onClick={() => setMobileOpen(false)}>Khuyến mãi</Link>
+              <Link to="/cart" className={`text-sm font-medium py-2.5 px-3 rounded-lg transition-colors flex items-center justify-between ${isActivePath('/cart') ? 'text-brand-500 bg-green-50' : 'text-gray-700 hover:text-brand-500 hover:bg-gray-50'}`} onClick={() => setMobileOpen(false)}>
+                <span>Giỏ hàng</span>
+                {totalItems > 0 && (
+                  <span className="w-5 h-5 bg-brand-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                    {totalItems > 9 ? '9+' : totalItems}
+                  </span>
+                )}
+              </Link>
             </nav>
 
             <div className="px-4 py-4 border-t border-gray-100">
@@ -427,7 +462,8 @@ export default function Header() {
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </header>
   );

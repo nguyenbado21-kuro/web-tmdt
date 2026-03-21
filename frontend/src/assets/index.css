@@ -34,10 +34,8 @@
     height: auto;
   }
   
-  /* Specific fixes for common overflow causes */
-  .absolute {
-    contain: layout;
-  }
+  /* Specific fixes for common overflow causes - do NOT apply contain:layout globally to .absolute
+     as it breaks fixed/sticky positioning of overlays */
   
   /* Mobile-specific fixes */
   @media (max-width: 768px) {
@@ -51,8 +49,8 @@
       max-width: 100vw;
     }
     
-    /* Fix for floating elements on mobile */
-    .fixed {
+    /* Fix for floating elements on mobile - exclude full-screen overlays */
+    .fixed:not(.inset-0) {
       max-width: calc(100vw - 16px);
     }
   }
@@ -290,6 +288,22 @@ html { scroll-behavior: smooth; }
 @keyframes parallax {
   0% { transform: translateY(0); }
   100% { transform: translateY(-10px); }
+}
+
+/* Mobile drawer slide-in from left */
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 /* Burger menu animations */
