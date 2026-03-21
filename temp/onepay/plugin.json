@@ -1,0 +1,11 @@
+{
+    "id": "botble/onepay",
+    "name": "OnePay Payment Gateway",
+    "namespace": "Botble\\OnePay\\",
+    "provider": "Botble\\OnePay\\Providers\\OnePayServiceProvider",
+    "author": "Botble Technologies",
+    "url": "https://botble.com",
+    "version": "1.0",
+    "description": "OnePay payment gateway integration",
+    "require": ["payment"]
+}

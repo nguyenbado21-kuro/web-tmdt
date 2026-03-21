@@ -15,6 +15,8 @@ export default function Shop() {
   const [searchInput, setSearchInput] = useState(searchParams.get('search') ?? '');
   const [sort, setSort] = useState('default');
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 12;
 
   const { data: categories } = useFetch(() => api.categories.getAll(), []);
   const { data: allProducts, loading, error, refetch } = useFetch(
@@ -48,6 +50,7 @@ export default function Shop() {
   const handleFilterCat = (catId: string) => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setSelectedCat(catId);
+    setCurrentPage(1);
     const params: Record<string, string> = {};
     if (catId) params.categoryId = catId;
     if (search) params.search = search;
@@ -57,6 +60,7 @@ export default function Shop() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setSearch(searchInput);
+    setCurrentPage(1);
     const params: Record<string, string> = {};
     if (selectedCat) params.categoryId = selectedCat;
     if (searchInput) params.search = searchInput;
@@ -73,6 +77,14 @@ export default function Shop() {
     if (sort === 'rating') return (b.rating || 0) - (a.rating || 0);
     return 0;
   });
+
+  const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
+  const paginated = sorted.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
     <main className="min-h-screen bg-white">
@@ -146,10 +158,52 @@ export default function Shop() {
             )}
             {sorted.length > 0 && (
               <>
-                <p className="text-sm text-gray-400 mb-6">{sorted.length} product{sorted.length !== 1 ? 's' : ''} found</p>
+                <p className="text-sm text-gray-400 mb-6">{sorted.length} sản phẩm</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {sorted.map((p: Product) => <ProductCard key={p.id} product={p} />)}
+                  {paginated.map((p: Product) => <ProductCard key={p.id} product={p} />)}
                 </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-1 mt-10">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                      ‹ Trước
+                    </button>
+
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                      .reduce<(number | '...')[]>((acc, p, idx, arr) => {
+                        if (idx > 0 && typeof arr[idx - 1] === 'number' && (p as number) - (arr[idx - 1] as number) > 1) {
+                          acc.push('...');
+                        }
+                        acc.push(p);
+                        return acc;
+                      }, [])
+                      .map((item, idx) =>
+                        item === '...'
+                          ? <span key={`ellipsis-${idx}`} className="px-2 py-2 text-gray-400 text-sm">...</span>
+                          : <button
+                              key={item}
+                              onClick={() => handlePageChange(item as number)}
+                              className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors
+                                ${currentPage === item
+                                  ? 'bg-brand-500 text-white'
+                                  : 'text-gray-600 hover:bg-gray-100'}`}>
+                              {item}
+                            </button>
+                      )}
+
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                      Sau ›
+                    </button>
+                  </div>
+                )}
               </>
             )}
           </div>

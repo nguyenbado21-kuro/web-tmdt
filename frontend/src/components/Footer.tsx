@@ -53,17 +53,17 @@ export default function Footer() {
             <h4 className="font-semibold text-white mb-4">Sản phẩm</h4>
             <ul className="space-y-2">
               <li>
-                <Link to="/shop" className="text-gray-400 text-sm hover:text-white transition-colors">
+                <Link to="/shop?categoryId=13" className="text-gray-400 text-sm hover:text-white transition-colors">
                   Máy lọc gia đình
                 </Link>
               </li>
               <li>
-                <Link to="/shop" className="text-gray-400 text-sm hover:text-white transition-colors">
+                <Link to="/shop?categoryId=13" className="text-gray-400 text-sm hover:text-white transition-colors">
                   Máy lọc công nghiệp
                 </Link>
               </li>
               <li>
-                <Link to="/shop" className="text-gray-400 text-sm hover:text-white transition-colors">
+                <Link to="/shop?categoryId=42" className="text-gray-400 text-sm hover:text-white transition-colors">
                   Phụ kiện & Lõi lọc
                 </Link>
               </li>
@@ -85,12 +85,12 @@ export default function Footer() {
             <h4 className="font-semibold text-white mb-4">Công ty</h4>
             <ul className="space-y-2">
               <li>
-                <Link to="/" className="text-gray-400 text-sm hover:text-white transition-colors">
+                <Link to="https://nanogeyser.com/ve-chung-toi" className="text-gray-400 text-sm hover:text-white transition-colors">
                   Về chúng tôi
                 </Link>
               </li>
               <li>
-                <Link to="/" className="text-gray-400 text-sm hover:text-white transition-colors">
+                <Link to="https://nanogeyser.com/blog" className="text-gray-400 text-sm hover:text-white transition-colors">
                   Tin tức
                 </Link>
               </li>
@@ -100,12 +100,12 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/" className="text-gray-400 text-sm hover:text-white transition-colors">
+                <Link to="https://nanogeyser.com/he-thong-dai-ly" className="text-gray-400 text-sm hover:text-white transition-colors">
                   Đối tác
                 </Link>
               </li>
               <li>
-                <Link to="/" className="text-gray-400 text-sm hover:text-white transition-colors">
+                <Link to="https://nanogeyser.com/lien-he" className="text-gray-400 text-sm hover:text-white transition-colors">
                   Liên hệ
                 </Link>
               </li>
@@ -127,7 +127,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/" className="text-gray-400 text-sm hover:text-white transition-colors">
+                <Link to="https://nanogeyser.com/lien-he" className="text-gray-400 text-sm hover:text-white transition-colors">
                   Vận chuyển & Lắp đặt
                 </Link>
               </li>

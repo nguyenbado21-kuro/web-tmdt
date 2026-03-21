@@ -5,6 +5,8 @@ import { formatPrice, RetailOrder, OrderDetail } from '../types';
 import LoadingSpinner, { ErrorState } from '../components/LoadingSpinner';
 import FloatingHotline from '../components/FloatingHotline';
 
+const BASE_DOMAIN = 'https://nanoshop.iongeyser.com';
+
 // Get user data from localStorage
 const getUserData = () => {
   const userData = localStorage.getItem('userData');
@@ -199,7 +201,10 @@ export default function Orders() {
                       <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 shrink-0">
                         {item.product.product_images?.[0] ? (
                           <img
-                            src={`https://nanoshop.longerpay.com/api${item.product.product_images[0].link}`}
+                            src={(() => {
+                              const link = item.product.product_images[0].link;
+                              return link.startsWith('http') ? link : `${BASE_DOMAIN}${link}`;
+                            })()}
                             alt={item.product.name}
                             className="w-full h-full object-cover"
                           />
@@ -265,9 +270,15 @@ export default function Orders() {
                 </div>
 
                 {/* Action Button */}
-                <div className="flex justify-end">
+                <div className="flex justify-end gap-2">
                   <button
                     onClick={() => navigate(`/orders/${order.id}`)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    Xem chi tiết
+                  </button>
+                  <button
+                    onClick={() => {window.open('https://thayloiloc.com/#/hotline', '_blank')}}
                     className="btn-primary"
                   >
                     Chọn thợ

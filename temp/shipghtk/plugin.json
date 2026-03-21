@@ -1,0 +1,10 @@
+{
+    "id": "botble/shipghtk",
+    "name": "ShipGhtk",
+    "namespace": "Botble\\ShipGhtk\\",
+    "provider": "Botble\\ShipGhtk\\Providers\\ShipGhtkServiceProvider",
+    "author": "Botble Technologies",
+    "url": "https://botble.com",
+    "version": "1.0.0",
+    "description": "Multi-Carrier ShipGhtk Shipping Rates & Address Validation for Ecommerce"
+}

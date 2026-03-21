@@ -149,6 +149,14 @@ export const api = {
       return request<RetailOrder[]>(url, { method: 'GET' });
     },
 
+    getById: (id: string) => request<RetailOrder>(`/retailOrder/${id}`),
+
+    assignTechnician: (orderId: string, technicianId: number) =>
+      request<any>(`/retailOrder/${orderId}/assignTechnician`, {
+        method: 'POST',
+        body: JSON.stringify({ technician_id: technicianId }),
+      }),
+
     create: (data: any) =>
       request<any>('/retailOrder/createRetailOrder', {
         method: 'POST',
@@ -176,6 +184,10 @@ export const api = {
 
   vouchers: {
     getAll: () => request<Voucher[]>('/retailOrderCart/listVoucherAll'),
+  },
+
+  technicians: {
+    getAll: () => request<any[]>('/technician'),
   },
 
   auth: {

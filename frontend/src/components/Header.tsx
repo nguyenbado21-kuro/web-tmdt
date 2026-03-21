@@ -5,6 +5,7 @@ import { useAuth } from '../store/authContext';
 import { useFetch } from '../hooks/useFetch';
 import { api } from '../services/api';
 import { Category, Product, getProductImages, formatPrice } from '../types';
+import { useSwipe } from '../hooks/useSwipe';
 import logo from '../assets/logo.png';
 import cartIcon from '../assets/cart.png';
 
@@ -22,6 +23,8 @@ export default function Header() {
   const searchRef = useRef<HTMLDivElement>(null);
 
   const { data: categories } = useFetch(() => api.categories.getAll(), []);
+
+  const drawerSwipe = useSwipe(() => setMobileOpen(false), () => {});
 
   // Load user name from localStorage
   useEffect(() => {
@@ -371,82 +374,59 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile drawer */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-gray-100 bg-white px-4 py-4 flex flex-col gap-3 animate-slide-down-fade w-full max-w-full overflow-hidden">
-          <Link 
-            to="/" 
-            className="text-sm font-medium text-gray-700 py-2 transition-all duration-300 hover:text-brand-500 hover:bg-gray-50 rounded-lg px-3 animate-menu-item opacity-0 menu-item-delay-1 w-full truncate"
+        <div className="md:hidden fixed inset-0 z-50 flex">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setMobileOpen(false)}
+          />
+          {/* Drawer */}
+          <div
+            className="relative w-72 max-w-[85vw] h-full bg-white shadow-2xl flex flex-col animate-slide-in-left overflow-y-auto"
+            {...drawerSwipe}
           >
-            Trang chủ
-          </Link>
-          <Link 
-            to="/shop" 
-            className="text-sm font-medium text-gray-700 py-2 transition-all duration-300 hover:text-brand-500 hover:bg-gray-50 rounded-lg px-3 animate-menu-item opacity-0 menu-item-delay-2 w-full truncate"
-            onClick={() => setMobileOpen(false)}
-          >
-            Sản phẩm
-          </Link>
-          
-          {/* Mobile Categories */}
-          {categories && (
-            <div className="pl-4 space-y-2 border-l-2 border-gray-200 animate-menu-item opacity-0 menu-item-delay-3 w-full max-w-full overflow-hidden">
-              {categories.map((cat: Category, index: number) => (
-                <button
-                  key={cat.id}
-                  onClick={() => {
-                    handleCategoryClick(cat.id.toString());
-                    setMobileOpen(false);
-                  }}
-                  className={`block text-sm text-gray-600 py-2 px-3 rounded-lg transition-all duration-300 hover:text-brand-500 hover:bg-gray-50 animate-menu-item opacity-0 w-full text-left truncate`}
-                  style={{ animationDelay: `${0.35 + index * 0.05}s` }}
-                >
-                  {cat.name}
-                </button>
-              ))}
+            <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
+              <img src={logo} alt="Logo" className="h-10 w-auto object-contain" />
+              <button onClick={() => setMobileOpen(false)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
             </div>
-          )}
-          
-          <Link 
-            to="/orders" 
-            className="text-sm font-medium text-gray-700 py-2 transition-all duration-300 hover:text-brand-500 hover:bg-gray-50 rounded-lg px-3 animate-menu-item opacity-0 menu-item-delay-4 w-full truncate"
-            onClick={() => setMobileOpen(false)}
-          >
-            Đơn hàng
-          </Link>
-          <Link 
-            to="/promotions" 
-            className="text-sm font-medium text-gray-700 py-2 transition-all duration-300 hover:text-brand-500 hover:bg-gray-50 rounded-lg px-3 animate-menu-item opacity-0 menu-item-delay-5 w-full truncate"
-            onClick={() => setMobileOpen(false)}
-          >
-            Khuyến mãi
-          </Link>
-          <Link 
-            to="/cart" 
-            className="text-sm font-medium text-gray-700 py-2 transition-all duration-300 hover:text-brand-500 hover:bg-gray-50 rounded-lg px-3 animate-menu-item opacity-0 menu-item-delay-6 w-full truncate"
-            onClick={() => setMobileOpen(false)}
-          >
-            Giỏ hàng
-          </Link>
-          
-          {isLoggedIn ? (
-            <Link 
-              to="/profile" 
-              className="text-sm font-medium text-gray-700 py-2 transition-all duration-300 hover:text-brand-500 hover:bg-gray-50 rounded-lg px-3 animate-menu-item opacity-0 menu-item-delay-7 w-full truncate"
-              onClick={() => setMobileOpen(false)}
-            >
-              Tài khoản
-            </Link>
-          ) : (
-            <Link 
-              to="/login" 
-              className="text-sm font-medium bg-brand-500 text-white py-2 px-4 rounded-lg transition-all duration-300 hover:bg-brand-600 hover:scale-105 animate-menu-item opacity-0 menu-item-delay-7 w-full text-center"
-              onClick={() => setMobileOpen(false)}
-            >
-              Đăng nhập
-            </Link>
-          )}
+
+            <nav className="flex flex-col gap-1 px-3 py-4 flex-1">
+              <Link to="/" className="text-sm font-medium text-gray-700 py-2.5 px-3 rounded-lg hover:text-brand-500 hover:bg-gray-50 transition-colors" onClick={() => setMobileOpen(false)}>Trang chủ</Link>
+              <Link to="/shop" className="text-sm font-medium text-gray-700 py-2.5 px-3 rounded-lg hover:text-brand-500 hover:bg-gray-50 transition-colors" onClick={() => setMobileOpen(false)}>Sản phẩm</Link>
+
+              {categories && (
+                <div className="pl-4 space-y-1 border-l-2 border-gray-100 ml-3">
+                  {categories.map((cat: Category) => (
+                    <button key={cat.id} onClick={() => { handleCategoryClick(cat.id.toString()); setMobileOpen(false); }}
+                      className="block w-full text-left text-sm text-gray-500 py-2 px-3 rounded-lg hover:text-brand-500 hover:bg-gray-50 transition-colors">
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <Link to="/orders" className="text-sm font-medium text-gray-700 py-2.5 px-3 rounded-lg hover:text-brand-500 hover:bg-gray-50 transition-colors" onClick={() => setMobileOpen(false)}>Đơn hàng</Link>
+              <Link to="/promotions" className="text-sm font-medium text-gray-700 py-2.5 px-3 rounded-lg hover:text-brand-500 hover:bg-gray-50 transition-colors" onClick={() => setMobileOpen(false)}>Khuyến mãi</Link>
+              <Link to="/cart" className="text-sm font-medium text-gray-700 py-2.5 px-3 rounded-lg hover:text-brand-500 hover:bg-gray-50 transition-colors" onClick={() => setMobileOpen(false)}>Giỏ hàng</Link>
+            </nav>
+
+            <div className="px-4 py-4 border-t border-gray-100">
+              {isLoggedIn ? (
+                <Link to="/profile" className="flex items-center gap-2 text-sm font-medium text-gray-700 py-2.5 px-3 rounded-lg hover:text-brand-500 hover:bg-gray-50 transition-colors" onClick={() => setMobileOpen(false)}>
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                  {userName || 'Tài khoản'}
+                </Link>
+              ) : (
+                <Link to="/login" className="block text-center text-sm font-medium bg-brand-500 text-white py-2.5 px-4 rounded-lg hover:bg-brand-600 transition-colors" onClick={() => setMobileOpen(false)}>Đăng nhập</Link>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </header>

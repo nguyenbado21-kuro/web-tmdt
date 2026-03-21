@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useSwipe } from '../hooks/useSwipe';
 import { api } from '../services/api';
 import { Category, Product, getProductImages, formatPrice } from '../types';
 import ProductCard from '../components/ProductCard';
@@ -29,6 +30,14 @@ function HeroSection() {
     setCurrentSlide(index);
   };
 
+  const swipeHandlers = useSwipe(
+    () => setCurrentSlide((prev) => (prev + 1) % slides.length),
+    () => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)
+  );
+  const handlePhoneClick = (phone: string) => {
+  window.location.href = `tel:${phone.replace(/[^\d+]/g, '')}`
+}
+
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-green-950 via-green-900 to-gray-900 text-white w-full">
       {/* Decorative blobs - Mobile safe */}
@@ -57,7 +66,7 @@ function HeroSection() {
                 </svg>
               </Button>
               <Button size="lg" variant="outline" className="!border-white/30 !text-white hover:!bg-white/10 w-full sm:w-auto text-xs sm:text-sm md:text-base"
-                onClick={() => navigate('/shop')}>
+                onClick={() => handlePhoneClick("038 690 2668")}>
                 Tư vấn miễn phí
               </Button>
             </div>
@@ -74,7 +83,8 @@ function HeroSection() {
 
           {/* Right - Image Slider */}
           <div className="relative z-10 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-lg mx-auto lg:mx-0 animate-fade-in-right delay-200 order-1 lg:order-2">
-            <div className="relative aspect-square rounded-2xl overflow-hidden group cursor-pointer w-full">
+            <div className="relative aspect-square rounded-2xl overflow-hidden group cursor-pointer w-full"
+              {...swipeHandlers}>
               {/* Slides */}
               {slides.map((slide, index) => (
                 <div

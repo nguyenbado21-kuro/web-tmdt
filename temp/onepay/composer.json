@@ -1,0 +1,7 @@
+{
+    "name": "botble/onepay",
+    "description": "OnePay",
+    "type": "package",
+    "require": {
+    }
+}
