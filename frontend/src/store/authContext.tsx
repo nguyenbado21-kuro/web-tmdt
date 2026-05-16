@@ -22,6 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = (token: string, userData: any) => {
     localStorage.setItem('auth_token', token);
+    localStorage.setItem('token', token);
     localStorage.setItem('userData', JSON.stringify(userData));
     localStorage.setItem('isLoggedIn', 'true');
     setIsLoggedIn(true);
@@ -29,6 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     localStorage.removeItem('auth_token');
+    localStorage.removeItem('token');
     localStorage.removeItem('userData');
     localStorage.removeItem('userPhone');
     localStorage.removeItem('isLoggedIn');

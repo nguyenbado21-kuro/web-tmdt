@@ -8,6 +8,9 @@ import { formatPrice, getProductImages } from '../../types';
 import Button from '../Button';
 import CouponBox from './CouponBox';
 
+export const baseUrl = import.meta.env.VITE_URL_BACKEND;
+
+
 interface Props {
   onPlaceOrder: () => void;
 }

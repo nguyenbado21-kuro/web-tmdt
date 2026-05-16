@@ -17,6 +17,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      '/api_vtp': {
+        target: 'https://partner.viettelpost.vn/v2',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api_vtp/, ''),
+      },
     },
   },
 });

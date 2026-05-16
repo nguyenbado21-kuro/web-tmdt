@@ -11,11 +11,13 @@ import { formatPrice } from '../../types';
 const PROVIDER_ICON: Record<string, string> = {
   SHIP_GHTK: '🟢',
   SHIP_VIETTEL_POST: '🔴',
+  SHIP_GHN: '🟠',
 };
 
 const PROVIDER_LABEL: Record<string, string> = {
   SHIP_GHTK: 'GHTK',
   SHIP_VIETTEL_POST: 'ViettelPost',
+  SHIP_GHN: 'Giao Hàng Nhanh',
 };
 
 export default function ShippingMethod() {

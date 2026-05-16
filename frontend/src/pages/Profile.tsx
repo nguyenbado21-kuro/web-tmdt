@@ -61,7 +61,7 @@ const loadUserData = async () => {
         // Handle different user data structures
         const userId = parsedUser.id || parsedUser.user?.id;
         const username = parsedUser.username || parsedUser.user.username || parsedUser.name || '';
-        const email = parsedUser.email || parsedUser.user?.email || '';
+        const email = parsedUser.email || parsedUser.user?.email || parsedUser.gmail || parsedUser.user?.gmail || '';
         const phone = parsedUser.phone || parsedUser.user?.phone || userPhone || '';
         
         setUser({
@@ -103,7 +103,7 @@ const loadUserData = async () => {
         setUser(freshUserData);
         setForm({
           name: freshUserData.username || freshUserData.name || '',
-          email: freshUserData.email || '',
+          email: freshUserData.email || freshUserData.gmail || '',
           phone: freshUserData.phone || userPhone || '',
         });
 
@@ -178,6 +178,7 @@ const handleSave = async () => {
     const updateData = {
       name: trimmedName,  // API expects 'name' field
       email: trimmedEmail,
+      gmail: trimmedEmail,
     };
 
     console.log('Updating user ID:', userId, 'with data:', updateData);

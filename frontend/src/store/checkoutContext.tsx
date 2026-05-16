@@ -6,7 +6,6 @@
 import { createContext, useContext, useReducer, ReactNode } from 'react';
 import { Address, Voucher } from '../types';
 import { ShippingOption, ShippingOptionId, ShippingProvider } from '../services/checkoutTypes';
-import { OnePayCardType } from '../plugins/onepay/types';
 
 // ─── State ────────────────────────────────────────────────────────────────────
 
@@ -16,8 +15,7 @@ export interface CheckoutState {
   shippingOptions: ShippingOption[];
   selectedShipping: ShippingOption | null;
   shippingLoading: boolean;
-  paymentMethod: 'cod' | 'bank_transfer' | 'onepay';
-  onePayCardType: OnePayCardType;
+  paymentMethod: 'cod' | 'bank_transfer';
   transferImage: File | null;
   voucher: Voucher | null;
   discount: number;
@@ -35,7 +33,6 @@ const initialState: CheckoutState = {
   selectedShipping: null,
   shippingLoading: false,
   paymentMethod: 'bank_transfer',
-  onePayCardType: 'QR',
   transferImage: null,
   voucher: null,
   discount: 0,
@@ -55,7 +52,6 @@ type Action =
   | { type: 'SET_SELECTED_SHIPPING'; option: ShippingOption }
   | { type: 'SET_SHIPPING_LOADING'; loading: boolean }
   | { type: 'SET_PAYMENT_METHOD'; method: CheckoutState['paymentMethod'] }
-  | { type: 'SET_ONEPAY_CARD_TYPE'; cardType: OnePayCardType }
   | { type: 'SET_TRANSFER_IMAGE'; image: File | null }
   | { type: 'SET_VOUCHER'; voucher: Voucher | null; discount: number; isFreeShipping: boolean }
   | { type: 'SET_NOTE'; note: string }
@@ -72,7 +68,6 @@ function reducer(state: CheckoutState, action: Action): CheckoutState {
     case 'SET_SELECTED_SHIPPING': return { ...state, selectedShipping: action.option };
     case 'SET_SHIPPING_LOADING':  return { ...state, shippingLoading: action.loading };
     case 'SET_PAYMENT_METHOD':    return { ...state, paymentMethod: action.method };
-    case 'SET_ONEPAY_CARD_TYPE':  return { ...state, onePayCardType: action.cardType };
     case 'SET_TRANSFER_IMAGE':    return { ...state, transferImage: action.image };
     case 'SET_VOUCHER':           return { ...state, voucher: action.voucher, discount: action.discount, isFreeShipping: action.isFreeShipping };
     case 'SET_NOTE':              return { ...state, note: action.note };

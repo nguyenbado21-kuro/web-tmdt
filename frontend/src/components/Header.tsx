@@ -25,7 +25,7 @@ export default function Header() {
 
   const { data: categories } = useFetch(() => api.categories.getAll(), []);
 
-  const drawerSwipe = useSwipe(() => setMobileOpen(false), () => {});
+  const drawerSwipe = useSwipe(() => setMobileOpen(false), () => { });
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
@@ -126,11 +126,11 @@ export default function Header() {
   // Helper function to highlight search term in text
   const highlightSearchTerm = (text: string, searchTerm: string) => {
     if (!searchTerm.trim()) return text;
-    
+
     const regex = new RegExp(`(${searchTerm.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
     const parts = text.split(regex);
-    
-    return parts.map((part, index) => 
+
+    return parts.map((part, index) =>
       regex.test(part) ? (
         <span key={index} className="bg-yellow-200 font-semibold">{part}</span>
       ) : (
@@ -159,108 +159,104 @@ export default function Header() {
 
           {/* Logo */}
           <Link to="/" className="flex items-center shrink-0">
-            <img 
-              src={logo} 
-              alt="Nano Geyser Logo" 
+            <img
+              src={logo}
+              alt="Nano Geyser Logo"
               className="h-12 sm:h-16 lg:h-20 w-auto object-contain max-w-full"
             />
           </Link>
 
           {/* Nav links */}
           <nav className="hidden md:flex items-center gap-8">
-            <Link 
-              to="/" 
-              className={`relative text-sm font-medium transition-colors py-2 ${
-                isActivePath('/') 
-                  ? 'text-green-600' 
-                  : 'text-green-600 hover:text-gray-900'
-              }`}
+            <Link
+              to="/"
+              className={`relative text-sm font-medium transition-colors py-2 ${isActivePath('/')
+                  ? 'text-[#65a63a]'
+                  : 'text-gray-700 hover:text-[#65a63a]'
+                }`}
             >
               TRANG CHỦ
               {isActivePath('/') && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-600 animate-slide-underline"></div>
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#65a63a] animate-slide-underline"></div>
               )}
             </Link>
-            
+
             {/* Products Dropdown */}
-            <div 
+            <div
               className="relative"
               onMouseEnter={() => setProductsDropdownOpen(true)}
               onMouseLeave={() => setProductsDropdownOpen(false)}
             >
-              <button 
+              <button
                 onClick={() => navigate('/shop')}
-                className={`relative text-sm font-medium transition-colors py-2 flex items-center gap-1 ${
-                  isActivePath('/shop') || isActivePath('/product')
-                    ? 'text-green-600' 
-                    : 'text-green-600 hover:text-gray-900'
-                }`}
+                className={`relative text-sm font-medium transition-colors py-2 flex items-center gap-1 ${isActivePath('/shop') || isActivePath('/product')
+                    ? 'text-[#65a63a]'
+                    : 'text-gray-700 hover:text-[#65a63a]'
+                  }`}
               >
                 SẢN PHẨM
-                <svg 
-                  width="12" 
-                  height="12" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
                   strokeWidth="2"
                   className={`transition-transform ${productsDropdownOpen ? 'rotate-180' : ''}`}
                 >
                   <path d="M6 9l6 6 6-6" />
                 </svg>
                 {(isActivePath('/shop') || isActivePath('/product')) && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-600 animate-slide-underline"></div>
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#65a63a] animate-slide-underline"></div>
                 )}
               </button>
 
               {/* Dropdown Menu */}
               {productsDropdownOpen && categories && (
                 <div className="absolute top-full left-0 w-64 animate-fadeIn z-50 max-w-[calc(100vw-2rem)] pt-2">
-                <div className="bg-white rounded-xl shadow-lg border border-gray-100 py-2">
-                  {categories.map((cat: Category) => (
-                    <button
-                      key={cat.id}
-                      onClick={() => handleCategoryClick(cat.id.toString())}
-                      className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-green-50 hover:text-green-600 transition-colors"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="truncate">{cat.name}</span>
-                        <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full shrink-0 ml-2">
-                          
-                        </span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
+                  <div className="bg-white rounded-xl shadow-lg border border-gray-100 py-2">
+                    {categories.map((cat: Category) => (
+                      <button
+                        key={cat.id}
+                        onClick={() => handleCategoryClick(cat.id.toString())}
+                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-[#eef6e9] hover:text-[#65a63a] transition-colors"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="truncate">{cat.name}</span>
+                          <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full shrink-0 ml-2">
+
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
 
-            <Link 
-              to="/orders" 
-              className={`relative text-sm font-medium transition-colors py-2 ${
-                isActivePath('/orders') 
-                  ? 'text-green-600' 
-                  : 'text-green-600 hover:text-gray-900'
-              }`}
+            <Link
+              to="/orders"
+              className={`relative text-sm font-medium transition-colors py-2 ${isActivePath('/orders')
+                  ? 'text-[#65a63a]'
+                  : 'text-gray-700 hover:text-[#65a63a]'
+                }`}
             >
               ĐƠN HÀNG
               {isActivePath('/orders') && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-600 animate-slide-underline"></div>
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#65a63a] animate-slide-underline"></div>
               )}
             </Link>
 
-            <Link 
-              to="/promotions" 
-              className={`relative text-sm font-medium transition-colors py-2 ${
-                isActivePath('/promotions') 
-                  ? 'text-green-600' 
-                  : 'text-green-600 hover:text-gray-900'
-              }`}
+            <Link
+              to="/promotions"
+              className={`relative text-sm font-medium transition-colors py-2 ${isActivePath('/promotions')
+                  ? 'text-[#65a63a]'
+                  : 'text-gray-700 hover:text-[#65a63a]'
+                }`}
             >
               KHUYẾN MÃI
               {isActivePath('/promotions') && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-600 animate-slide-underline"></div>
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#65a63a] animate-slide-underline"></div>
               )}
             </Link>
           </nav>
@@ -291,8 +287,8 @@ export default function Header() {
                     className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center gap-3"
                   >
                     <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 shrink-0">
-                      <img 
-                        src={getProductImages(product)[0]} 
+                      <img
+                        src={getProductImages(product)[0]}
                         alt={product.name}
                         className="w-full h-full object-cover max-w-full h-auto"
                       />
@@ -354,7 +350,7 @@ export default function Header() {
                 </span>
               )}
             </Link>
-            
+
             {isLoggedIn ? (
               <Link to="/profile" className="hidden sm:flex items-center gap-2 p-2 hover:bg-gray-100 rounded-full transition-colors">
                 <svg className="w-6 h-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -371,8 +367,8 @@ export default function Header() {
             )}
 
             {/* Mobile menu */}
-            <button 
-              className={`md:hidden p-2 transition-all duration-300 hover:bg-gray-100 rounded-lg ${mobileOpen ? 'burger-open' : ''}`} 
+            <button
+              className={`md:hidden p-2 transition-all duration-300 hover:bg-gray-100 rounded-lg ${mobileOpen ? 'burger-open' : ''}`}
               onClick={() => setMobileOpen(!mobileOpen)}
             >
               <div className="w-5 h-5 relative flex flex-col justify-center items-center">
@@ -425,26 +421,26 @@ export default function Header() {
             </div>
 
             <nav className="flex flex-col gap-1 px-3 py-4 flex-1">
-              <Link to="/" className={`text-sm font-medium py-2.5 px-3 rounded-lg transition-colors ${isActivePath('/') ? 'text-brand-500 bg-green-50' : 'text-gray-700 hover:text-brand-500 hover:bg-gray-50'}`} onClick={() => setMobileOpen(false)}>Trang chủ</Link>
-              <Link to="/shop" className={`text-sm font-medium py-2.5 px-3 rounded-lg transition-colors ${isActivePath('/shop') || isActivePath('/product') ? 'text-brand-500 bg-green-50' : 'text-gray-700 hover:text-brand-500 hover:bg-gray-50'}`} onClick={() => setMobileOpen(false)}>Sản phẩm</Link>
+              <Link to="/" className={`text-sm font-medium py-2.5 px-3 rounded-lg transition-colors ${isActivePath('/') ? 'text-[#65a63a] bg-[#eef6e9]' : 'text-gray-700 hover:text-[#65a63a] hover:bg-gray-50'}`} onClick={() => setMobileOpen(false)}>Trang chủ</Link>
+              <Link to="/shop" className={`text-sm font-medium py-2.5 px-3 rounded-lg transition-colors ${isActivePath('/shop') || isActivePath('/product') ? 'text-[#65a63a] bg-[#eef6e9]' : 'text-gray-700 hover:text-[#65a63a] hover:bg-gray-50'}`} onClick={() => setMobileOpen(false)}>Sản phẩm</Link>
 
               {categories && (
                 <div className="pl-4 space-y-1 border-l-2 border-gray-100 ml-3">
                   {categories.map((cat: Category) => (
                     <button key={cat.id} onClick={() => { handleCategoryClick(cat.id.toString()); setMobileOpen(false); }}
-                      className="block w-full text-left text-sm text-gray-500 py-2 px-3 rounded-lg hover:text-brand-500 hover:bg-gray-50 transition-colors">
+                      className="block w-full text-left text-sm text-gray-500 py-2 px-3 rounded-lg hover:text-[#65a63a] hover:bg-gray-50 transition-colors">
                       {cat.name}
                     </button>
                   ))}
                 </div>
               )}
 
-              <Link to="/orders" className={`text-sm font-medium py-2.5 px-3 rounded-lg transition-colors ${isActivePath('/orders') ? 'text-brand-500 bg-green-50' : 'text-gray-700 hover:text-brand-500 hover:bg-gray-50'}`} onClick={() => setMobileOpen(false)}>Đơn hàng</Link>
-              <Link to="/promotions" className={`text-sm font-medium py-2.5 px-3 rounded-lg transition-colors ${isActivePath('/promotions') ? 'text-brand-500 bg-green-50' : 'text-gray-700 hover:text-brand-500 hover:bg-gray-50'}`} onClick={() => setMobileOpen(false)}>Khuyến mãi</Link>
-              <Link to="/cart" className={`text-sm font-medium py-2.5 px-3 rounded-lg transition-colors flex items-center justify-between ${isActivePath('/cart') ? 'text-brand-500 bg-green-50' : 'text-gray-700 hover:text-brand-500 hover:bg-gray-50'}`} onClick={() => setMobileOpen(false)}>
+              <Link to="/orders" className={`text-sm font-medium py-2.5 px-3 rounded-lg transition-colors ${isActivePath('/orders') ? 'text-[#65a63a] bg-[#eef6e9]' : 'text-gray-700 hover:text-[#65a63a] hover:bg-gray-50'}`} onClick={() => setMobileOpen(false)}>Đơn hàng</Link>
+              <Link to="/promotions" className={`text-sm font-medium py-2.5 px-3 rounded-lg transition-colors ${isActivePath('/promotions') ? 'text-[#65a63a] bg-[#eef6e9]' : 'text-gray-700 hover:text-[#65a63a] hover:bg-gray-50'}`} onClick={() => setMobileOpen(false)}>Khuyến mãi</Link>
+              <Link to="/cart" className={`text-sm font-medium py-2.5 px-3 rounded-lg transition-colors flex items-center justify-between ${isActivePath('/cart') ? 'text-[#65a63a] bg-[#eef6e9]' : 'text-gray-700 hover:text-[#65a63a] hover:bg-gray-50'}`} onClick={() => setMobileOpen(false)}>
                 <span>Giỏ hàng</span>
                 {totalItems > 0 && (
-                  <span className="w-5 h-5 bg-brand-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                  <span className="w-5 h-5 bg-[#65a63a] text-white text-xs font-bold rounded-full flex items-center justify-center">
                     {totalItems > 9 ? '9+' : totalItems}
                   </span>
                 )}
@@ -453,12 +449,12 @@ export default function Header() {
 
             <div className="px-4 py-4 border-t border-gray-100">
               {isLoggedIn ? (
-                <Link to="/profile" className="flex items-center gap-2 text-sm font-medium text-gray-700 py-2.5 px-3 rounded-lg hover:text-brand-500 hover:bg-gray-50 transition-colors" onClick={() => setMobileOpen(false)}>
+                <Link to="/profile" className="flex items-center gap-2 text-sm font-medium text-gray-700 py-2.5 px-3 rounded-lg hover:text-[#65a63a] hover:bg-gray-50 transition-colors" onClick={() => setMobileOpen(false)}>
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                   {userName || 'Tài khoản'}
                 </Link>
               ) : (
-                <Link to="/login" className="block text-center text-sm font-medium bg-brand-500 text-white py-2.5 px-4 rounded-lg hover:bg-brand-600 transition-colors" onClick={() => setMobileOpen(false)}>Đăng nhập</Link>
+                <Link to="/login" className="block text-center text-sm font-medium bg-[#65a63a] text-white py-2.5 px-4 rounded-lg hover:bg-[#548f2e] transition-colors" onClick={() => setMobileOpen(false)}>Đăng nhập</Link>
               )}
             </div>
           </div>

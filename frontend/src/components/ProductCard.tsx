@@ -1,6 +1,10 @@
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { Product, getProductImages, formatPrice } from '../types';
 import { useCart } from '../store/cartContext';
+import { api } from '../services/api';
+
+const baseUrl = import.meta.env.VITE_URL_BACKEND;
 
 interface Props {
   product: Product;
@@ -24,20 +28,54 @@ function StarRating({ rating, reviewCount }: { rating: number; reviewCount: numb
 export default function ProductCard({ product }: Props) {
   const { addToCart } = useCart();
   const images = getProductImages(product);
+  const firstImage = images && images.length > 0 ? images[0] : '';
+  const imageUrl = typeof firstImage === 'string' && firstImage
+    ? (firstImage.startsWith('http') ? firstImage : baseUrl + firstImage)
+    : '';
 
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
 
+  // Fetch real rating from API
+  const [rating, setRating] = useState<number>(Number(product.rating || 0));
+  const [reviewCount, setReviewCount] = useState<number>(Number(product.reviewCount || 0));
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchRating = async () => {
+      // Fetch product detail để lấy reviews[]
+      const res = await api.products.getById(String(product.id));
+      if (!cancelled && res.success && res.data) {
+        const reviews: any[] = res.data.reviews || [];
+        if (reviews.length > 0) {
+          const avg = reviews.reduce((sum: number, rv: any) => sum + Number(rv.rating ?? 0), 0) / reviews.length;
+          setRating(parseFloat(avg.toFixed(1)));
+          setReviewCount(reviews.length);
+        }
+      }
+    };
+
+    fetchRating();
+    return () => { cancelled = true; };
+  }, [product.id]);
+
   return (
     <div className="card group flex flex-col hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
       {/* Image */}
       <Link to={`/product/${product.id}`} className="relative overflow-hidden bg-gray-50 aspect-square block">
-        <img
-          src={images[0]}
-          alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-        />
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={product.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gray-200">
+            <span className="text-gray-400">No Image</span>
+          </div>
+        )}
         {discount > 0 && (
           <span className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
             -{discount}%
@@ -60,7 +98,7 @@ export default function ProductCard({ product }: Props) {
             {product.name}
           </h3>
         </Link>
-        <StarRating rating={product.rating || 0} reviewCount={product.reviewCount || 0} />
+        <StarRating rating={rating} reviewCount={reviewCount} />
 
         <div className="flex items-center gap-2 mt-auto pt-2">
           <span className="text-lg font-bold text-gray-900">{formatPrice(product.price)}đ</span>

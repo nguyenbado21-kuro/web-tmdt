@@ -33,6 +33,7 @@ export interface Product {
   slug?: string;
   meta?: string;
   content?: string;
+  reviews?: any[];
 }
 
 export interface Category {
@@ -185,4 +186,28 @@ export interface Technician {
 // Helper to format price with Vietnamese thousand separator
 export function formatPrice(price: number): string {
   return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+// Review interface
+export interface Review {
+  id: number;
+  product_id: number;
+  rating: number;
+  comment: string;
+  reviewer_name?: string;
+  reviewer_phone?: string;
+  images?: string[];
+  videos?: string[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ReviewFormData {
+  product_id: number;
+  rating: number;
+  comment: string;
+  reviewer_name?: string;
+  reviewer_phone?: string;
+  images?: File[];
+  videos?: File[];
 }

@@ -8,7 +8,7 @@
 //   ship_ghn   → NCOD (Nhanh)
 //   ship_ghht  → VHT  (Hỏa Tốc)
 export type ViettelPostServiceCode = 'LCOD' | 'NCOD' | 'VHT';
-export type ViettelPostShipCode = 'ship_ghtk' | 'ship_ghn' | 'ship_ghht';
+export type ViettelPostShipCode = 'vtp_ship_ghtk' | 'vtp_ship_ghn' | 'vtp_ship_ghht';
 
 export interface ViettelPostFeeRequest {
   SENDER_PROVINCE: string;   // tên tỉnh gửi
@@ -52,14 +52,14 @@ export interface ViettelPostRateItem {
 
 // Danh sách dịch vụ ViettelPost (từ getPriceAll)
 export const VIETTELPOST_SERVICES = [
-  { codeShip: 'ship_ghht' as const, codeService: 'VHT'  as ViettelPostServiceCode, textShip: 'Giao Hàng Hỏa Tốc', estimatedDays: 'Trong ngày' },
-  { codeShip: 'ship_ghtk' as const, codeService: 'LCOD' as ViettelPostServiceCode, textShip: 'Giao Hàng Tiết Kiệm', estimatedDays: '3-5 ngày' },
-  { codeShip: 'ship_ghn'  as const, codeService: 'NCOD' as ViettelPostServiceCode, textShip: 'Giao Hàng Nhanh',    estimatedDays: '1-2 ngày' },
+  { codeShip: 'vtp_ship_ghht' as const, codeService: 'VHT'  as ViettelPostServiceCode, textShip: 'Giao Hàng Hỏa Tốc', estimatedDays: 'Trong ngày' },
+  { codeShip: 'vtp_ship_ghtk' as const, codeService: 'LCOD' as ViettelPostServiceCode, textShip: 'Giao Hàng Tiết Kiệm', estimatedDays: '3-5 ngày' },
+  { codeShip: 'vtp_ship_ghn'  as const, codeService: 'NCOD' as ViettelPostServiceCode, textShip: 'Giao Hàng Nhanh',    estimatedDays: '1-2 ngày' },
 ] as const;
 
 // Mapping ship code → ViettelPost service code (dùng khi tạo shipment)
 export const SHIP_CODE_TO_VTP_SERVICE: Record<ViettelPostShipCode, ViettelPostServiceCode> = {
-  ship_ghtk: 'LCOD',
-  ship_ghn:  'NCOD',
-  ship_ghht: 'VHT',
+  vtp_ship_ghtk: 'LCOD',
+  vtp_ship_ghn:  'NCOD',
+  vtp_ship_ghht: 'VHT',
 };

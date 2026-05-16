@@ -11,7 +11,6 @@ import {
   selectShippingOption,
 } from '../store/checkoutContext';
 import { createOrder, validateVoucher } from '../services/checkoutApi';
-import { initOnePayPayment } from '../plugins/onepay/api';
 import { Voucher } from '../types';
 
 function getUserId(): string {
@@ -91,70 +90,6 @@ export function useCheckout() {
     }
   }
 
-  /**
-   * Thanh toán OnePay:
-   * 1. Tạo order trước (status=pending)
-   * 2. Gọi initOnePayPayment → nhận checkoutUrl từ backend
-   * 3. Redirect user đến OnePay gateway
-   * Backend callback: GET /payment/onepay/status → afterMakePayment() → update order status
-   */
-  async function placeOrderWithOnePay() {
-    if (!state.address) return;
-
-    dispatch({ type: 'SET_SUBMITTING', submitting: true });
-    dispatch({ type: 'SET_ERROR', error: null });
-
-    try {
-      const fullAddress = [
-        state.address.detailAddress,
-        state.address.ward,
-        state.address.district,
-        state.address.province,
-      ].filter(Boolean).join(', ');
-
-      // Bước 1: tạo order với payment_method = 'onepay'
-      const orderResult = await createOrder({
-        userId: getUserId(),
-        address: { name: state.address.name, phone: state.address.phone, full: fullAddress },
-        products: items.map(i => ({ product_id: i.product.id, quantity: i.quantity, price: +i.product.price })),
-        shippingMethod: selectShippingProvider(state),
-        shippingOption: selectShippingOption(state),
-        shippingFee,
-        paymentMethod: 'onepay',
-        discount: state.discount,
-        voucherCode: state.voucher?.code,
-        note: state.note,
-      });
-
-      if (!orderResult.success || !orderResult.orderId) {
-        dispatch({ type: 'SET_ERROR', error: orderResult.error ?? 'Không thể tạo đơn hàng' });
-        return;
-      }
-
-      // Bước 2: khởi tạo OnePay payment
-      // callback_url = backend route: GET /payment/onepay/status
-      const callbackUrl = `${window.location.origin}/payment/onepay/status`;
-      const payResult = await initOnePayPayment({
-        orderId: orderResult.orderId,
-        amount: finalTotal,
-        cardType: state.onePayCardType,
-        returnUrl: callbackUrl,
-      });
-
-      if (payResult.success && payResult.checkoutUrl) {
-        clearCart();
-        // Bước 3: redirect đến OnePay gateway
-        window.location.href = payResult.checkoutUrl;
-      } else {
-        dispatch({ type: 'SET_ERROR', error: payResult.error ?? 'Không thể khởi tạo thanh toán OnePay' });
-      }
-    } catch {
-      dispatch({ type: 'SET_ERROR', error: 'Có lỗi xảy ra. Vui lòng thử lại sau.' });
-    } finally {
-      dispatch({ type: 'SET_SUBMITTING', submitting: false });
-    }
-  }
-
   function goToOrders() {
     dispatch({ type: 'RESET' });
     navigate('/orders');
@@ -169,7 +104,6 @@ export function useCheckout() {
     finalTotal,
     applyVoucher,
     placeOrder,
-    placeOrderWithOnePay,
     goToOrders,
   };
 }

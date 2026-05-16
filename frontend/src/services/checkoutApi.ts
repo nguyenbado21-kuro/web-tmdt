@@ -8,8 +8,6 @@ export { aggregateShippingFees } from '../plugins/shared/shippingAggregator';
 
 // Re-export shipping types
 export type { ShippingOption, ShippingOptionId, ShippingProvider } from './checkoutTypes';
-export { initOnePayPayment, parseOnePayCallback } from '../plugins/onepay/api';
-export type { OnePayCardType, OnePayInitResponse } from '../plugins/onepay/types';
 
 import { apiRequest } from '../plugins/shared/request';
 
@@ -54,7 +52,7 @@ export interface CreateOrderPayload {
   shippingMethod: string;   // SHIP_GHTK | SHIP_VIETTEL_POST
   shippingOption: string;   // ship_ghtk | ship_ghn | ship_ghht
   shippingFee: number;
-  paymentMethod: 'cod' | 'bank_transfer' | 'onepay';
+  paymentMethod: 'cod' | 'bank_transfer';
   discount: number;
   voucherCode?: string;
   note?: string;

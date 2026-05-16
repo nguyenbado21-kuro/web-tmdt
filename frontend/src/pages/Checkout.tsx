@@ -20,6 +20,9 @@ import CheckoutSuccess from '../components/checkout/CheckoutSuccess';
 import VietQRPayment from '../components/VietQRPayment';
 import FloatingButtons from '../components/FloatingButtons';
 
+const baseUrl = import.meta.env.VITE_URL_BACKEND;
+
+
 // ─── Inner component (needs context) ─────────────────────────────────────────
 
 function CheckoutInner() {
@@ -27,7 +30,7 @@ function CheckoutInner() {
   const { isLoggedIn } = useAuth();
   const navigate = useNavigate();
   const { addresses, getDefaultAddress } = useUserAddresses();
-  const { state, dispatch, placeOrder, placeOrderWithOnePay, goToOrders, finalTotal } = useCheckout();
+  const { state, dispatch, placeOrder, goToOrders, finalTotal } = useCheckout();
   const [showQR, setShowQR] = useState(false);
   const qrOrderId = `DH${Date.now()}`;
 
@@ -68,12 +71,6 @@ function CheckoutInner() {
       return;
     }
 
-    if (state.paymentMethod === 'onepay') {
-      // Tạo order → initOnePay → redirect đến gateway
-      await placeOrderWithOnePay();
-      return;
-    }
-
     // COD: tạo order trực tiếp
     await placeOrder();
   };
@@ -107,7 +104,11 @@ function CheckoutInner() {
             <h2 className="font-semibold text-gray-900 mb-4">Sản phẩm</h2>
             <div className="space-y-4">
               {items.map(({ product, quantity }) => {
-                const img = product.product_images?.[0]?.link ?? product.images?.[0] ?? '';
+                const images = product.product_images && product.product_images.length > 0 
+                  ? product.product_images.map(i => i.link) 
+                  : product.images || [];
+                const imgPath = images[0] || '';
+                const img = imgPath ? (imgPath.startsWith('http') ? imgPath : baseUrl + imgPath) : '';
                 return (
                   <div key={product.id} className="flex gap-4 pb-4 border-b border-gray-100 last:border-b-0 last:pb-0">
                     <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-50 shrink-0">

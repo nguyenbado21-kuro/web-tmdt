@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../store/cartContext';
-import { useAuth } from '../store/authContext';
+import { useAuth } from '../store/authContext'; 
 import Button from '../components/Button';
 import VoucherSelector from '../components/VoucherSelector';
 import { api } from '../services/api';
 import { formatPrice, getProductImages, Voucher } from '../types';
 import cartIcon from '../assets/cart.png';
 import FloatingButtons from '../components/FloatingButtons';
+
+export const baseUrl = import.meta.env.VITE_URL_BACKEND;
+
 
 export default function Cart() {
   const { items, totalPrice, totalItems, removeFromCart, updateQuantity, clearCart } = useCart();
@@ -34,9 +37,9 @@ export default function Cart() {
 
   const calculateDiscount = () => {
     if (!selectedVoucher) return 0;
-    
+
     const discountValue = parseFloat(selectedVoucher.discount);
-    
+
     // All vouchers are fixed amount (not percentage)
     return discountValue;
   };
@@ -99,12 +102,16 @@ export default function Cart() {
         <div className="lg:col-span-2 flex flex-col gap-3 sm:gap-4">
           {items.map(({ product, quantity }) => (
             <div key={product.id} className="flex flex-col sm:flex-row gap-3 sm:gap-4 bg-white border border-gray-100 rounded-2xl p-3 sm:p-4 shadow-sm">
-              <div className="w-full sm:w-20 sm:h-20 md:w-24 md:h-24 h-48 rounded-xl overflow-hidden bg-gray-50 shrink-0">
-                <img 
-                  src={getProductImages(product)[0]} 
-                  alt={product.name} 
-                  className="w-full h-full object-cover"
-                />
+              <div className="w-full sm:w-20 sm:h-20 md:w-24 md:h-24 h-48 rounded-xl overflow-hidden bg-gray-50 shrink-0 flex items-center justify-center">
+                {getProductImages(product)[0] ? (
+                  <img
+                    src={getProductImages(product)[0].startsWith('http') ? getProductImages(product)[0] : baseUrl + getProductImages(product)[0]}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-gray-400 text-xs">No Image</span>
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <Link to={`/product/${product.id}`}
@@ -135,7 +142,7 @@ export default function Cart() {
         <div className="lg:col-span-1">
           <div className="bg-gray-50 rounded-2xl p-4 sm:p-6 lg:sticky lg:top-24">
             <h2 className="font-semibold text-gray-900 text-lg mb-4 sm:mb-6">Tóm tắt đơn hàng</h2>
-            
+
             {/* Voucher Section */}
             <div className="mb-4 p-3 bg-white rounded-lg border border-gray-200">
               <div className="flex items-center justify-between">
@@ -185,7 +192,7 @@ export default function Cart() {
               <p className="text-xs text-gray-500 text-center mt-2">
                 Bạn cần đăng nhập để thực hiện thanh toán
               </p>
-            )}           
+            )}
             <Link to="/shop" className="block text-center mt-4 text-sm text-brand-500 hover:underline">
               Tiếp tục mua sắm
             </Link>
@@ -200,10 +207,10 @@ export default function Cart() {
           className="fixed bottom-24 right-8 z-50 w-12 h-12 bg-brand-500 hover:bg-brand-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group"
           aria-label="Scroll to top"
         >
-          <svg 
-            className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform" 
-            fill="none" 
-            stroke="currentColor" 
+          <svg
+            className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform"
+            fill="none"
+            stroke="currentColor"
             viewBox="0 0 24 24"
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" />

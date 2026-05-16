@@ -6,11 +6,10 @@
 
 import { useState } from 'react';
 import { useCheckoutContext } from '../../store/checkoutContext';
-import { ONEPAY_CARD_OPTIONS } from '../../plugins/onepay/types';
 import VietQRPayment from '../VietQRPayment';
 
 interface PaymentMethodOption {
-  id: 'cod' | 'bank_transfer' | 'onepay';
+  id: 'cod' | 'bank_transfer';
   name: string;
   icon: string;
   description: string;
@@ -19,7 +18,6 @@ interface PaymentMethodOption {
 const PAYMENT_METHODS: PaymentMethodOption[] = [
   { id: 'cod',           name: 'Thanh toán khi nhận hàng (COD)', icon: '💵', description: 'Trả tiền mặt khi nhận hàng' },
   { id: 'bank_transfer', name: 'Chuyển khoản ngân hàng',         icon: '🏦', description: 'VietQR — quét mã QR chuyển khoản' },
-  { id: 'onepay',        name: 'OnePay',                          icon: '💳', description: 'Thẻ ATM, Visa, Mastercard, QR, Trả góp' },
 ];
 
 interface Props {
@@ -62,39 +60,6 @@ export default function PaymentMethod({ finalTotal, onConfirmTransfer }: Props) 
             </label>
           ))}
         </div>
-
-        {/* OnePay — chọn loại thẻ (vpc_CardList) */}
-        {state.paymentMethod === 'onepay' && (
-          <div className="mt-4 pt-4 border-t border-gray-100">
-            <p className="text-sm font-medium text-gray-700 mb-3">Chọn hình thức thanh toán OnePay:</p>
-            <div className="grid grid-cols-2 gap-2">
-              {ONEPAY_CARD_OPTIONS.map(card => (
-                <label
-                  key={card.id}
-                  className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer transition-colors ${
-                    state.onePayCardType === card.id
-                      ? 'border-brand-500 bg-brand-50'
-                      : 'border-gray-200 hover:bg-gray-50'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="onepay_card"
-                    value={card.id}
-                    checked={state.onePayCardType === card.id}
-                    onChange={() => dispatch({ type: 'SET_ONEPAY_CARD_TYPE', cardType: card.id })}
-                    className="text-brand-500"
-                  />
-                  <span>{card.icon}</span>
-                  <span className="text-sm">{card.name}</span>
-                </label>
-              ))}
-            </div>
-            <p className="text-xs text-gray-500 mt-2">
-              Bạn sẽ được chuyển đến cổng thanh toán OnePay để hoàn tất giao dịch.
-            </p>
-          </div>
-        )}
 
         {/* bank_transfer — nút mở QR */}
         {state.paymentMethod === 'bank_transfer' && (

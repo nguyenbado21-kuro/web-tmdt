@@ -1,6 +1,6 @@
 import { Product, Category, Order, RetailOrder, Voucher, ApiResponse, normalizeApiResponse } from '../types';
 
-const BASE_API = 'https://nanoshop.iongeyser.com/api/v1.0';
+const BASE_API = `${import.meta.env.VITE_URL_BACKEND}/api/v1.0`;
 
 async function request<T>(
   url: string,
@@ -10,11 +10,13 @@ async function request<T>(
     const fullUrl = `${BASE_API}${url}`;
     const token = localStorage.getItem('auth_token');
 
-    const headers: Record<string, string> = {};
-    
+    const headers: Record<string, string> = {
+      'Accept-Charset': 'utf-8',
+    };
+
     // Only add Content-Type if body is not FormData
     if (!(options.body instanceof FormData)) {
-      headers['Content-Type'] = 'application/json';
+      headers['Content-Type'] = 'application/json; charset=utf-8';
     }
 
     // Không gửi token cho login/register
@@ -50,7 +52,11 @@ async function request<T>(
       };
     }
 
-    const apiResponse: ApiResponse<T> = await res.json();
+    // Get response as text first to handle encoding properly
+    const responseText = await res.text();
+    
+    // Parse JSON from the properly decoded text
+    const apiResponse: ApiResponse<T> = JSON.parse(responseText);
     const normalized = normalizeApiResponse(apiResponse);
 
     return normalized;
@@ -84,23 +90,30 @@ export const api = {
         return { success: false, error: categoriesResponse.error };
       }
 
-      const allProducts: Product[] = [];
+      const uniqueProductsMap = new Map<string | number, Product>();
 
       categoriesResponse.data.forEach((category) => {
         if (category.products && Array.isArray(category.products)) {
-          const productsWithCategoryId = category.products.map((product) => ({
-            ...product,
-            category_id: category.id,
-          }));
-
-          allProducts.push(...productsWithCategoryId);
+          category.products.forEach((product) => {
+            // Loại bỏ trùng lặp nếu 1 sản phẩm thuộc nhiều danh mục
+            if (product.id && !uniqueProductsMap.has(product.id)) {
+              uniqueProductsMap.set(product.id, {
+                ...product,
+                category_id: category.id || (category as any).cate_id,
+              });
+            }
+          });
         }
       });
+
+      const allProducts = Array.from(uniqueProductsMap.values());
 
       return { success: true, data: allProducts };
     },
 
     getById: (id: string) => request<Product>(`/product/${id}`),
+
+    getByCategory: (id: string | number) => request<Category>(`/product/listCatebyID/${id}`),
 
     create: (data: Partial<Product>) =>
       request<Product>('/product', {
@@ -118,6 +131,66 @@ export const api = {
       request<void>(`/product/${id}`, {
         method: 'DELETE',
       }),
+
+    review: (data: { 
+      product_id: number; 
+      rating: number; 
+      comment: string; 
+      reviewer_name?: string; 
+      reviewer_phone?: string;
+      images?: File[];
+      videos?: File[];
+    }) => {
+      const formData = new FormData();
+      
+      // Add basic fields
+      formData.append('product_id', data.product_id.toString());
+      formData.append('rating', data.rating.toString());
+      formData.append('comment', data.comment);
+      
+      if (data.reviewer_name) {
+        formData.append('reviewer_name', data.reviewer_name);
+      }
+      
+      if (data.reviewer_phone) {
+        formData.append('reviewer_phone', data.reviewer_phone);
+      }
+      
+      // Add images using distinct keys to support all potential backend validation schemas without PHP type collision
+      if (data.images && data.images.length > 0) {
+        data.images.forEach((image) => {
+          formData.append('images[]', image);
+          formData.append('image', image);
+          formData.append('review_images[]', image);
+        });
+        console.log(`Added ${data.images.length} images to FormData`);
+      }
+      
+      // Add videos using distinct keys to support all potential backend validation schemas without PHP type collision
+      if (data.videos && data.videos.length > 0) {
+        data.videos.forEach((video) => {
+          formData.append('videos[]', video);
+          formData.append('video', video);
+          formData.append('review_videos[]', video);
+        });
+        console.log(`Added ${data.videos.length} videos to FormData`);
+      }
+      
+      // Log FormData contents
+      console.log('FormData contents:');
+      for (const [key, value] of formData.entries()) {
+        if (value instanceof File) {
+          console.log(`${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
+        } else {
+          console.log(`${key}: ${value}`);
+        }
+      }
+      
+      return request<any>('/product/review', {
+        method: 'POST',
+        body: formData,
+      });
+    },
   },
 
   categories: {
@@ -166,7 +239,7 @@ export const api = {
     updateImage: (orderId: string, image: File) => {
       const formData = new FormData();
       formData.append('images[]', image);
-      
+
       return request<any>(`/retailOrder/${orderId}/updateRetailOrderImageBill`, {
         method: 'PUT',
         body: formData,
@@ -200,7 +273,7 @@ export const api = {
         }),
       }),
 
-    register: (data: { phone: string; pass: string; email?: string; name?: string }) =>
+    register: (data: { phone: string; pass: string; email?: string; gmail?: string; name?: string }) =>
       request<{ token: string; user: any }>('/user/register', {
         method: 'POST',
         body: JSON.stringify(data),
@@ -220,7 +293,7 @@ export const api = {
     update: (id: string, data: any) => {
       const formData = new FormData();
       formData.append('id', id);
-      
+
       // Add other fields from data (name, email, addresses, etc.)
       Object.keys(data).forEach(key => {
         if (data[key] !== undefined && data[key] !== null) {

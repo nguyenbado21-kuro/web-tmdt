@@ -13,7 +13,6 @@
  * sau đó merge + lấy giá thấp nhất theo type — đúng logic backend.
  */
 
-import { calculateGhtkFee, normalizeGhtkRates, GhtkCalculateRequest } from '../shipghtk/api';
 import { calculateViettelPostFee, normalizeViettelPostRates } from '../shipviettelpost/api';
 import { ShippingOption, ShippingOptionId } from '../../services/checkoutTypes';
 
@@ -33,26 +32,14 @@ export interface AggregateShippingRequest {
 export async function aggregateShippingFees(
   req: AggregateShippingRequest
 ): Promise<ShippingOption[]> {
-  const ghtkReq: GhtkCalculateRequest = {
-    province: req.province,
-    district: req.district,
-    ward: req.ward,
-    weight: req.weight,
-    orderTotal: req.orderTotal,
-  };
-
-  // Gọi song song — mirror Promise::settle()->wait()
-  const [ghtkResult, vtpResult] = await Promise.allSettled([
-    calculateGhtkFee(ghtkReq),
+  // Chỉ gọi API của ViettelPost
+  const [vtpResult] = await Promise.allSettled([
     calculateViettelPostFee({ province: req.province, district: req.district, weight: req.weight, orderTotal: req.orderTotal }),
   ]);
 
   // Collect tất cả options
   const allOptions: ShippingOption[] = [];
 
-  if (ghtkResult.status === 'fulfilled' && ghtkResult.value.rates.length) {
-    allOptions.push(...normalizeGhtkRates(ghtkResult.value.rates));
-  }
   if (vtpResult.status === 'fulfilled' && vtpResult.value.rates.length) {
     allOptions.push(...normalizeViettelPostRates(vtpResult.value.rates));
   }
@@ -67,17 +54,17 @@ export async function aggregateShippingFees(
   }
 
   // Sắp xếp: Tiết Kiệm → Nhanh → Hỏa Tốc
-  const ORDER: ShippingOptionId[] = ['ship_ghtk', 'ship_ghn', 'ship_ghht'];
+  const ORDER: ShippingOptionId[] = ['vtp_ship_ghtk', 'vtp_ship_ghn', 'vtp_ship_ghht'];
   const result = ORDER
     .map(id => lowestByType.get(id))
     .filter((o): o is ShippingOption => !!o);
 
-  // Fallback nếu cả 2 API đều fail
+  // Fallback nếu API fail
   if (result.length === 0) {
     return [
-      { id: 'ship_ghtk', name: 'Tiết Kiệm',  provider: 'SHIP_GHTK',         fee: 0, estimatedDays: '3-5 ngày' },
-      { id: 'ship_ghn',  name: 'Nhanh',       provider: 'SHIP_GHTK',         fee: 0, estimatedDays: '1-2 ngày' },
-      { id: 'ship_ghht', name: 'Hỏa Tốc',     provider: 'SHIP_VIETTEL_POST', fee: 0, estimatedDays: 'Trong ngày' },
+      { id: 'vtp_ship_ghtk', name: 'Tiết Kiệm',  provider: 'SHIP_VIETTEL_POST', fee: 0, estimatedDays: '3-5 ngày' },
+      { id: 'vtp_ship_ghn',  name: 'Nhanh',       provider: 'SHIP_VIETTEL_POST', fee: 0, estimatedDays: '1-2 ngày' },
+      { id: 'vtp_ship_ghht', name: 'Hỏa Tốc',     provider: 'SHIP_VIETTEL_POST', fee: 0, estimatedDays: 'Trong ngày' },
     ];
   }
 

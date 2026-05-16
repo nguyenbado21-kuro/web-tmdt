@@ -46,6 +46,7 @@ export default function Register() {
         pass: form.password,
         name: form.name.trim(),
         email: form.email.trim(),
+        gmail: form.email.trim(),
       }) as any;
 
       const isSuccess =response?.success === true;

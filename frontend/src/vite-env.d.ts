@@ -19,3 +19,11 @@ declare module '*.svg' {
   const value: string;
   export default value;
 }
+
+interface ImportMetaEnv {
+  readonly VITE_URL_BACKEND: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}

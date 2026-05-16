@@ -6,6 +6,7 @@ import LoadingSpinner, { ErrorState } from '../components/LoadingSpinner';
 
 const BASE_DOMAIN = 'https://nanoshop.iongeyser.com';
 
+
 const STATUS_LABELS: Record<string, string> = {
   '0': 'Chờ xác nhận',
   '1': 'Đã xác nhận',
@@ -51,7 +52,7 @@ export default function OrderDetail() {
           try {
             const parsed = JSON.parse(userData);
             phone = parsed.phone || parsed.user?.phone || parsed.user?.phone_number || null;
-          } catch {}
+          } catch { }
         }
 
         if (!phone) {
@@ -98,9 +99,9 @@ export default function OrderDetail() {
     return (
       <main className="min-h-[calc(100vh-400px)] py-12 px-4 w-full">
         <div className="w-full max-w-screen-xl mx-auto">
-          <ErrorState 
-            message={error || 'Không tìm thấy đơn hàng'} 
-            onRetry={() => window.location.reload()} 
+          <ErrorState
+            message={error || 'Không tìm thấy đơn hàng'}
+            onRetry={() => window.location.reload()}
           />
         </div>
       </main>
@@ -222,8 +223,18 @@ export default function OrderDetail() {
                         {item.quantity} × {formatPrice(parseFloat(item.unit_price))}đ
                       </div>
                     </div>
-                    <div className="font-semibold text-gray-900 shrink-0">
-                      {formatPrice(parseFloat(item.amount))}đ
+                    <div className="flex flex-col items-end gap-2 shrink-0">
+                      <div className="font-semibold text-gray-900">
+                        {formatPrice(parseFloat(item.amount))}đ
+                      </div>
+                      {order.status === '5' && (
+                        <button
+                          onClick={() => navigate(`/product/${item.product.id || item.product_id}#reviews`)}
+                          className="text-xs text-brand-500 border border-brand-500 px-3 py-1 rounded-full hover:bg-brand-50 transition-colors"
+                        >
+                          Đánh giá
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}

@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import Fuse from 'fuse.js';
 import { api } from '../services/api';
 import { useFetch } from '../hooks/useFetch';
 import { Category, Product } from '../types';
@@ -7,6 +8,19 @@ import ProductCard from '../components/ProductCard';
 import SectionTitle from '../components/SectionTitle';
 import LoadingSpinner, { ErrorState } from '../components/LoadingSpinner';
 import FloatingButtons from '../components/FloatingButtons';
+
+const baseUrl = import.meta.env.VITE_URL_BACKEND;
+
+const removeDiacritics = (str: string) => {
+  if (!str) return '';
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase()
+    .trim();
+};
 
 export default function Shop() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -20,16 +34,72 @@ export default function Shop() {
 
   const { data: categories } = useFetch(() => api.categories.getAll(), []);
   const { data: allProducts, loading, error, refetch } = useFetch(
-    () => api.products.getAllFromCategories(),
-    []
+    async () => {
+      if (search) {
+        return api.products.getAll({ categoryId: selectedCat, search });
+      }
+
+      if (selectedCat) {
+        const res = await api.products.getByCategory(selectedCat);
+        if (res.success && res.data) {
+          const categoryProducts = res.data.products || [];
+          return {
+            success: true,
+            data: categoryProducts.map(p => ({ ...p, category_id: Number(res.data!.id) })) as Product[]
+          };
+        }
+        return { success: false, error: res.error };
+      }
+      return api.products.getAll();
+    },
+    [selectedCat, search]
   );
 
-  // Filter products by category and search
-  const products = allProducts?.filter(p => {
-    if (selectedCat && p.category_id !== Number(selectedCat)) return false;
-    if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
-    return true;
-  });
+  // Filter products by category
+  const products = useMemo(() => {
+    let result = allProducts || [];
+
+    // Only display products that belong to an active category
+    if (categories && categories.length > 0) {
+      const validCategoryIds = new Set(categories.map(c => Number(c.id)));
+      result = result.filter(p => {
+        const pCatId = Number(p.category_id || (p as any).categoryId || (p as any).cate_id || (p as any).category_id);
+        if (!pCatId) return true; // Bypass if category_id is missing from backend response
+        return validCategoryIds.has(pCatId);
+      });
+    }
+
+    if (selectedCat && !search) {
+      result = result.filter(p => {
+        const pCatId = Number(p.category_id || (p as any).categoryId || (p as any).cate_id);
+        return pCatId === Number(selectedCat);
+      });
+    }
+
+    if (search) {
+      const normalizedSearch = removeDiacritics(search);
+
+      const fuse = new Fuse(result, {
+        keys: ['name', 'product_code', 'model'],
+        threshold: 0.3, // 30% tolerance for typos
+        ignoreLocation: true,
+        includeScore: true,
+        // Match ANY part of the name (LIKE '%keyword%')
+        getFn: (obj: any, path: string | string[]) => {
+          const key = Array.isArray(path) ? path[0] : path;
+          const value = obj[key];
+          return removeDiacritics(typeof value === 'string' ? value : '');
+        }
+      });
+
+      // Perform a full-phrase relative/partial match
+      result = fuse.search(normalizedSearch)
+        .sort((a, b) => (a.score || 0) - (b.score || 0))
+        .map(r => r.item);
+    }
+
+    return result;
+  }, [allProducts, selectedCat, categories, search]);
 
   useEffect(() => {
     setSelectedCat(searchParams.get('categoryId') ?? '');
@@ -75,7 +145,9 @@ export default function Shop() {
     if (sort === 'price-asc') return a.price - b.price;
     if (sort === 'price-desc') return b.price - a.price;
     if (sort === 'rating') return (b.rating || 0) - (a.rating || 0);
-    return 0;
+    const aCat = Number(a.category_id || (a as any).categoryId || (a as any).cate_id);
+    const bCat = Number(b.category_id || (b as any).categoryId || (b as any).cate_id);
+    return aCat - bCat;
   });
 
   const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
@@ -119,15 +191,15 @@ export default function Shop() {
             <div className="flex flex-row lg:flex-col gap-2 flex-wrap">
               <button
                 onClick={() => handleFilterCat('')}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors text-left
-                  ${!selectedCat ? 'bg-brand-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                className={`flex-1 min-w-[120px] lg:w-full px-4 py-2 rounded-full lg:rounded-xl text-sm font-medium transition-colors text-center lg:text-left
+                  ${!selectedCat ? 'bg-brand-500 text-white shadow-md shadow-brand-500/20' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
                 Tất cả sản phẩm
               </button>
               {categories?.map((cat: Category) => (
                 <button key={cat.id}
                   onClick={() => handleFilterCat(String(cat.id))}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors text-left
-                    ${selectedCat === String(cat.id) ? 'bg-brand-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                  className={`flex-1 min-w-[120px] lg:w-full px-4 py-2 rounded-full lg:rounded-xl text-sm font-medium transition-colors text-center lg:text-left
+                    ${selectedCat === String(cat.id) ? 'bg-brand-500 text-white shadow-md shadow-brand-500/20' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
                   {cat.name}
                 </button>
               ))}
@@ -136,8 +208,8 @@ export default function Shop() {
             <div className="mt-8">
               <h3 className="font-semibold text-gray-900 mb-4">Sắp xếp theo</h3>
               <select value={sort} onChange={(e) => setSort(e.target.value)}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-700 outline-none focus:border-brand-500">
-                <option value="default">Mặc định</option>
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-700 outline-none focus:border-brand-500 bg-white shadow-sm cursor-pointer">
+                <option value="default">Theo danh mục</option>
                 <option value="price-asc">Giá: Thấp tới cao</option>
                 <option value="price-desc">Giá: Cao xuống thấp</option>
                 <option value="rating">Top Đánh giá</option>
@@ -151,15 +223,18 @@ export default function Shop() {
             {error && <ErrorState message={error} onRetry={refetch} />}
             {!loading && !error && sorted.length === 0 && (
               <div className="text-center py-20 text-gray-400">
-                <div className="text-5xl mb-4">🔍</div>
-                <p className="text-lg font-medium">Không tìm thấy sản phẩm</p>
+                <div className="text-5xl mb-4 opacity-50">🔍</div>
+                <p className="text-lg font-medium text-gray-600">Không tìm thấy sản phẩm</p>
                 <p className="text-sm mt-1">Hãy thử tìm kiếm hoặc chọn danh mục khác</p>
               </div>
             )}
             {sorted.length > 0 && (
               <>
-                <p className="text-sm text-gray-400 mb-6">{sorted.length} sản phẩm</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="flex items-center justify-between mb-6">
+                  <p className="text-sm text-gray-500 font-medium">Hiển thị {sorted.length} sản phẩm</p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {paginated.map((p: Product) => <ProductCard key={p.id} product={p} />)}
                 </div>
 
@@ -186,14 +261,14 @@ export default function Shop() {
                         item === '...'
                           ? <span key={`ellipsis-${idx}`} className="px-2 py-2 text-gray-400 text-sm">...</span>
                           : <button
-                              key={item}
-                              onClick={() => handlePageChange(item as number)}
-                              className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors
+                            key={item}
+                            onClick={() => handlePageChange(item as number)}
+                            className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors
                                 ${currentPage === item
-                                  ? 'bg-brand-500 text-white'
-                                  : 'text-gray-600 hover:bg-gray-100'}`}>
-                              {item}
-                            </button>
+                                ? 'bg-brand-500 text-white'
+                                : 'text-gray-600 hover:bg-gray-100'}`}>
+                            {item}
+                          </button>
                       )}
 
                     <button

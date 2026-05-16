@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSwipe } from '../hooks/useSwipe';
 import { api } from '../services/api';
@@ -8,26 +8,35 @@ import SectionTitle from '../components/SectionTitle';
 import Button from '../components/Button';
 import LoadingSpinner, { ErrorState } from '../components/LoadingSpinner';
 
-import slider1 from '../assets/img-slider/1.png';
-import slider2 from '../assets/img-slider/2.png';
-import slider3 from '../assets/img-slider/3.png';
+import YouTube from 'react-youtube';
+
+const baseUrl = import.meta.env.VITE_URL_BACKEND;
 
 // ───── Hero ──────────────────────────────────────────────────────────────────
 function HeroSection() {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
-  const slides = [slider1, slider2, slider3];
+  const slides = ['tzXXslotbDQ', '6NgO_FQcKZI', 'AzTQBMnL1S4'];
+  const playerRefs = useRef<any[]>([]);
 
-  // Auto slide every 3 seconds
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 3000);
-    return () => clearInterval(timer);
-  }, [slides.length]);
+    playerRefs.current.forEach((player, idx) => {
+      if (player && typeof player.pauseVideo === 'function') {
+        if (idx === currentSlide) {
+          player.playVideo();
+        } else {
+          player.pauseVideo();
+        }
+      }
+    });
+  }, [currentSlide]);
 
   const goToSlide = (index: number) => {
     setCurrentSlide(index);
+  };
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
   };
 
   const swipeHandlers = useSwipe(
@@ -35,14 +44,15 @@ function HeroSection() {
     () => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)
   );
   const handlePhoneClick = (phone: string) => {
-  window.location.href = `tel:${phone.replace(/[^\d+]/g, '')}`
-}
+    window.location.href = `tel:${phone.replace(/[^\d+]/g, '')}`
+  }
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-green-950 via-green-900 to-gray-900 text-white w-full">
+    <section className="relative overflow-hidden bg-gradient-to-br from-[#77be48] via-[#65a63a] to-[#3d6921] text-white w-full">
       {/* Decorative blobs - Mobile safe */}
-      <div className="absolute top-0 right-0 w-8 h-8 sm:w-12 sm:h-12 md:w-16 md:h-16 lg:w-24 lg:h-24 xl:w-32 xl:h-32 bg-brand-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 animate-float" />
-      <div className="absolute bottom-0 left-0 w-6 h-6 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-16 lg:h-16 xl:w-24 xl:h-24 bg-accent-500/10 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4 animate-float" style={{ animationDelay: '3s' }} />
+      <div className="absolute top-[-20%] right-[-10%] w-[300px] sm:w-[400px] lg:w-[600px] aspect-square bg-[#7cfc2f]/20 rounded-full blur-[80px] sm:blur-[120px] animate-float mix-blend-screen pointer-events-none" />
+      <div className="absolute bottom-[-20%] left-[-10%] w-[250px] sm:w-[350px] lg:w-[500px] aspect-square bg-yellow-400/20 rounded-full blur-[80px] sm:blur-[120px] animate-float mix-blend-screen pointer-events-none" style={{ animationDelay: '2s' }} />
+      <div className="absolute top-[30%] left-[20%] w-[200px] sm:w-[300px] aspect-square bg-white/10 rounded-full blur-[60px] sm:blur-[100px] animate-float mix-blend-overlay pointer-events-none" style={{ animationDelay: '4s' }} />
 
       <div className="w-full max-w-screen-xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 lg:py-12">
         <div className="grid lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-12 items-center">
@@ -81,22 +91,40 @@ function HeroSection() {
             </div>
           </div>
 
-          {/* Right - Image Slider */}
-          <div className="relative z-10 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-lg mx-auto lg:mx-0 animate-fade-in-right delay-200 order-1 lg:order-2">
-            <div className="relative aspect-square rounded-2xl overflow-hidden group cursor-pointer w-full"
+          {/* Right - Video Slider */}
+          <div className="relative z-10 w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl mx-auto lg:mx-0 animate-fade-in-right delay-200 order-1 lg:order-2">
+            <div className="relative aspect-video rounded-2xl overflow-hidden group cursor-pointer w-full shadow-2xl bg-black"
               {...swipeHandlers}>
               {/* Slides */}
-              {slides.map((slide, index) => (
+              {slides.map((videoId, index) => (
                 <div
                   key={index}
-                  className={`absolute inset-0 transition-opacity duration-1000 ${
-                    index === currentSlide ? 'opacity-100' : 'opacity-0'
-                  }`}
+                  className={`absolute inset-0 transition-opacity duration-1000 ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                    }`}
+                  style={{ pointerEvents: index === currentSlide ? 'auto' : 'none' }}
                 >
-                  <img
-                    src={slide}
-                    alt={`Máy lọc nước Nano Geyser ${index + 1}`}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 max-w-full"
+                  <YouTube
+                    videoId={videoId}
+                    opts={{
+                      width: '100%',
+                      height: '100%',
+                      playerVars: {
+                        autoplay: index === 0 ? 1 : 0,
+                        mute: 1,
+                        controls: 1,
+                        rel: 0,
+                        showinfo: 0,
+                      },
+                    }}
+                    onReady={(e: any) => {
+                      playerRefs.current[index] = e.target;
+                      if (index === currentSlide) {
+                        e.target.playVideo();
+                      }
+                    }}
+                    onEnd={nextSlide}
+                    className="w-full h-full absolute inset-0"
+                    iframeClassName="w-full h-full pointer-events-auto"
                   />
                 </div>
               ))}
@@ -108,11 +136,10 @@ function HeroSection() {
                 <button
                   key={index}
                   onClick={() => goToSlide(index)}
-                  className={`transition-all duration-300 rounded-full ${
-                    index === currentSlide
-                      ? 'w-5 sm:w-6 md:w-8 h-1.5 sm:h-2 bg-white'
-                      : 'w-1.5 sm:w-2 h-1.5 sm:h-2 bg-white/40 hover:bg-white/60'
-                  }`}
+                  className={`transition-all duration-300 rounded-full ${index === currentSlide
+                    ? 'w-5 sm:w-6 md:w-8 h-1.5 sm:h-2 bg-white'
+                    : 'w-1.5 sm:w-2 h-1.5 sm:h-2 bg-white/40 hover:bg-white/60'
+                    }`}
                   aria-label={`Chuyển đến slide ${index + 1}`}
                 />
               ))}
@@ -151,12 +178,12 @@ function CategoriesSection() {
   }, []);
 
   return (
-    <section className="py-12 sm:py-16 lg:py-20 bg-white w-full">
+    <section className="py-12 sm:py-16 lg:py-20 bg-[#fbfdf9] w-full">
       <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-6 sm:mb-8 text-center sm:text-left w-full">
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">DANH MỤC</h2>
         </div>
-        
+
         {loading && <LoadingSpinner />}
         {error && <ErrorState message={error} />}
         {categories && (
@@ -165,17 +192,17 @@ function CategoriesSection() {
               <button
                 key={cat.id}
                 onClick={() => navigate(`/shop?categoryId=${cat.id}`)}
-                
+
                 className="group flex flex-col items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-xl hover:bg-gray-50 transition-all duration-300 animate-scale-in w-full"
                 style={{ animationDelay: `${index * 0.05}s` }}>
                 {/* Icon/Image Container */}
                 <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden group-hover:scale-110 transition-transform duration-300">
-                  {cat.image ? (
-                    <img 
-                      src={cat.image} 
+                  {typeof cat.image === 'string' && cat.image ? (
+                    <img
+                      src={cat.image.startsWith('http') ? cat.image : baseUrl + cat.image}
                       alt={cat.name}
                       className="w-full h-full object-cover max-w-full h-auto"
-                      onError={(e) => { 
+                      onError={(e) => {
                         (e.target as HTMLImageElement).style.display = 'none';
                         (e.target as HTMLImageElement).parentElement!.innerHTML = '<span class="text-lg sm:text-xl lg:text-2xl">🏷️</span>';
                       }}
@@ -184,7 +211,7 @@ function CategoriesSection() {
                     <span className="text-lg sm:text-xl lg:text-2xl">🏷️</span>
                   )}
                 </div>
-                
+
                 {/* Category Name */}
                 <span className="text-xs sm:text-xs text-center text-gray-700 font-medium leading-tight line-clamp-2 group-hover:text-brand-500 transition-colors w-full">
                   {cat.name}
@@ -204,10 +231,46 @@ function FeaturedProducts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Swipe one item at a time for desktop
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [startX, setStartX] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
+
+  const scrollOneItem = (direction: 'left' | 'right') => {
+    if (!scrollRef.current) return;
+    const container = scrollRef.current;
+    const cardWidth = (container.firstChild as HTMLElement)?.offsetWidth || 300;
+    const gap = window.innerWidth >= 640 ? 24 : 16; // sm:gap-6 (24px) or gap-4 (16px)
+    const scrollAmount = cardWidth + gap;
+
+    container.scrollBy({
+      left: direction === 'right' ? scrollAmount : -scrollAmount,
+      behavior: 'smooth'
+    });
+  };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    setIsSwiping(true);
+    setStartX(e.pageX);
+  };
+
+  const handleMouseUp = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isSwiping) return;
+    setIsSwiping(false);
+    const diff = startX - e.pageX;
+    if (Math.abs(diff) > 50) {
+      scrollOneItem(diff > 0 ? 'right' : 'left');
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setIsSwiping(false);
+  };
+
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        const response = await api.products.getAllFromCategories();
+        const response = await api.products.getAll();
         if (response.success && response.data) {
           setAllProducts(response.data);
         } else {
@@ -222,32 +285,63 @@ function FeaturedProducts() {
 
     loadProducts();
   }, []);
-  
-  // Get first 4 products
-  const products = allProducts.slice(0, 4);
+
+  // Get first 8 products
+  const products = allProducts.slice(0, 8);
 
   return (
-    <section className="py-12 sm:py-16 lg:py-20 w-full">
+    <section className="py-12 sm:py-16 lg:py-20 w-full overflow-hidden relative group bg-white">
       <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-8 sm:mb-10 gap-4 w-full">
           <SectionTitle tag="Nổi bật" title="Sản phẩm" highlight="Đặc biệt"
             subtitle="Những dòng máy lọc nước được yêu thích nhất" />
-          <Link to="/shop" className="text-brand-500 font-semibold text-sm hover:underline flex items-center gap-1 shrink-0 group animate-fade-in">
+          <Link to="/shop" className="text-brand-500 font-semibold text-sm hover:underline flex items-center gap-1 shrink-0 group/link animate-fade-in">
             Xem tất cả
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="group-hover:translate-x-1 transition-transform">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="group-hover/link:translate-x-1 transition-transform">
               <path d="M5 12h14M12 5l7 7-7 7" />
             </svg>
           </Link>
         </div>
+
         {loading && <LoadingSpinner />}
         {error && <ErrorState message={error} />}
+
         {products && products.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 w-full">
-            {products.map((p: Product, index: number) => (
-              <div key={p.id} className="animate-fade-in-up w-full" style={{ animationDelay: `${index * 0.1}s` }}>
-                <ProductCard product={p} />
-              </div>
-            ))}
+          <div className="relative">
+            {/* Desktop Navigation Arrows */}
+            <button
+              onClick={() => scrollOneItem('left')}
+              className="absolute left-[-16px] top-1/2 -translate-y-1/2 z-10 bg-white/90 shadow-md border border-gray-100 w-10 h-10 rounded-full flex items-center justify-center text-gray-600 hover:text-brand-500 hover:scale-110 transition-all opacity-0 group-hover:opacity-100 hidden sm:flex"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </button>
+
+            <button
+              onClick={() => scrollOneItem('right')}
+              className="absolute right-[-16px] top-1/2 -translate-y-1/2 z-10 bg-white/90 shadow-md border border-gray-100 w-10 h-10 rounded-full flex items-center justify-center text-gray-600 hover:text-brand-500 hover:scale-110 transition-all opacity-0 group-hover:opacity-100 hidden sm:flex"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </button>
+
+            <div
+              ref={scrollRef}
+              onMouseDown={handleMouseDown}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseLeave}
+              className="flex overflow-x-auto gap-4 sm:gap-6 pb-6 w-full select-none snap-x snap-mandatory cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              {products.map((p: Product, index: number) => (
+                <div
+                  key={p.id}
+                  className="snap-start shrink-0 w-[85vw] sm:w-[45vw] md:w-[300px] lg:w-[280px] xl:w-[290px] animate-fade-in-up"
+                  style={{ animationDelay: `${index * 0.05}s` }}>
+                  <ProductCard product={p} />
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -287,17 +381,17 @@ function PromotionsSection() {
   if (loading || activeVouchers.length === 0) return null;
 
   return (
-    <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-br from-red-50 to-orange-50 w-full">
+    <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-br from-[#eef6e9] to-white w-full">
       <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-8 sm:mb-10 gap-4 w-full">
-          <SectionTitle 
-            tag="Ưu đãi" 
-            title="Khuyến mãi" 
+          <SectionTitle
+            tag="Ưu đãi"
+            title="Khuyến mãi"
             highlight="Đặc biệt"
-            subtitle="Nhận ngay voucher giảm giá hấp dẫn" 
+            subtitle="Nhận ngay voucher giảm giá hấp dẫn"
           />
-          <Link 
-            to="/promotions" 
+          <Link
+            to="/promotions"
             className="text-red-500 font-semibold text-sm hover:underline flex items-center gap-1 shrink-0 group animate-fade-in"
           >
             Xem tất cả
@@ -368,7 +462,7 @@ function PromotionsSection() {
         </div>
 
         {/* CTA Banner */}
-        
+
       </div>
     </section>
   );
@@ -399,7 +493,7 @@ function BestSellers() {
   const best = products.slice(0, 3);
 
   return (
-    <section className="py-12 sm:py-16 lg:py-20 bg-gray-950 text-white w-full">
+    <section className="py-12 sm:py-16 lg:py-20 bg-[#1a2e11] text-white w-full">
       <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           <div className="text-center lg:text-left">
@@ -414,6 +508,8 @@ function BestSellers() {
               Xem sản phẩm bán chạy
             </Link>
           </div>
+
+
           <div className="flex flex-col gap-2 sm:gap-3 lg:gap-4 mt-6 lg:mt-0">
             {loading && <LoadingSpinner />}
             {best.map((p: Product, i: number) => (
@@ -423,7 +519,11 @@ function BestSellers() {
                   0{i + 1}
                 </span>
                 <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-lg sm:rounded-xl overflow-hidden bg-gray-800 shrink-0">
-                  <img src={getProductImages(p)[0]} alt={p.name} className="w-full h-full object-cover" />
+                  <img
+                    src={getProductImages(p)[0] ? (getProductImages(p)[0].startsWith('http') ? getProductImages(p)[0] : baseUrl + getProductImages(p)[0]) : ''}
+                    alt={p.name}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <div className="flex-1 min-w-0 pr-1">
                   <h4 className="font-semibold text-white line-clamp-2 group-hover:text-brand-400 transition-colors text-xs sm:text-sm lg:text-base leading-tight">
@@ -498,6 +598,93 @@ function NewsletterSection() {
   );
 }
 
+function CategorySectionItem({ category }: { category: Category }) {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await api.products.getByCategory(category.id);
+        if (res.success && res.data && res.data.products) {
+          const catProducts = res.data.products.map(p => ({
+            ...p,
+            category_id: category.id
+          })).slice(0, 4);
+          setProducts(catProducts);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, [category.id]);
+
+  if (loading || products.length === 0) return null;
+
+  return (
+    <section className="py-12 sm:py-16 bg-[#fbfdf9] text-gray-900 w-full border-b border-[#eef6e9] last:border-0">
+      <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-8 sm:mb-10 gap-4 w-full">
+          <SectionTitle tag="Danh mục" title={category.name} subtitle={`Khám phá các sản phẩm ${category.name} tốt nhất`} highlight="" />
+          <Link to={`/shop?categoryId=${category.id}`} className="text-brand-500 font-semibold text-sm hover:underline flex items-center gap-1 shrink-0 group/link animate-fade-in">
+            Xem tất cả {category.name}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="group-hover/link:translate-x-1 transition-transform">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </div>
+
+        <div className="flex md:grid md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 w-full overflow-x-auto snap-x snap-mandatory pb-4 md:pb-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          {products.map((p: Product, index: number) => (
+            <div key={p.id} className="snap-start shrink-0 w-[85vw] sm:w-[45vw] md:w-auto animate-fade-in-up" style={{ animationDelay: `${index * 0.05}s` }}>
+              <ProductCard product={p} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ───── Category Product Sections ──────────────────────────────────────────────
+function CategoryProductSections() {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const response = await api.categories.getAll();
+        if (response.success && response.data) {
+          setCategories(response.data);
+        } else {
+          setError(response.error || 'Failed to load categories');
+        }
+      } catch (err) {
+        setError('Failed to load categories');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCategories();
+  }, []);
+
+  if (loading) return <LoadingSpinner />;
+  if (error) return <ErrorState message={error} />;
+  if (!categories || categories.length === 0) return null;
+
+  return (
+    <>
+      {categories.map((category) => (
+        <CategorySectionItem key={category.id} category={category} />
+      ))}
+    </>
+  );
+}
+
 // ───── Page ───────────────────────────────────────────────────────────────────
 export default function Home() {
   return (
@@ -505,6 +692,7 @@ export default function Home() {
       <HeroSection />
       <CategoriesSection />
       <FeaturedProducts />
+      <CategoryProductSections />
       <PromotionsSection />
       <BestSellers />
       <NewsletterSection />

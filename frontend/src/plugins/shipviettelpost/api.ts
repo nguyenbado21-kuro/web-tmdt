@@ -20,7 +20,7 @@
 
 import { apiRequest } from '../shared/request';
 import { ShippingOption } from '../../services/checkoutTypes';
-import { ViettelPostRateItem, VIETTELPOST_SERVICES } from './types';
+import { ViettelPostRateItem, VIETTELPOST_SERVICES, ViettelPostShipCode } from './types';
 
 export interface ViettelPostCalculateRequest {
   province: string;   // tỉnh giao hàng (tên)
@@ -43,38 +43,108 @@ export interface ViettelPostCalculateResult {
  *
  * ViettelPost::getDataShip() đọc address_to.state_name (tỉnh) và address_to.city_name (huyện).
  */
+// Static Cache for locations
+let provinceCache: any[] = [];
+const districtCache: Record<number, any[]> = {};
+
+const VTP_TOKEN = 'EEE72D5772EF82B640B558AFAA4F3AE5';
+
+function normalizeName(name: string) {
+  return name.toLowerCase().replace(/thành phố|tỉnh|quận|huyện|thị xã/g, '').trim();
+}
+
+async function getProvinceId(name: string): Promise<number | null> {
+  if (provinceCache.length === 0) {
+    try {
+      const res = await fetch('/api_vtp/categories/listProvince');
+      const json = await res.json();
+      provinceCache = json.data || json;
+    } catch (e) { return null; }
+  }
+  const norm = normalizeName(name);
+  const found = provinceCache.find((p: any) => normalizeName(p.PROVINCE_NAME) === norm);
+  return found ? found.PROVINCE_ID : null;
+}
+
+async function getDistrictId(provinceId: number, name: string): Promise<number | null> {
+  if (!districtCache[provinceId]) {
+    try {
+      const res = await fetch(`/api_vtp/categories/listDistrict?provinceId=${provinceId}`);
+      const json = await res.json();
+      districtCache[provinceId] = json.data || json;
+    } catch (e) { return null; }
+  }
+  const norm = normalizeName(name);
+  const found = districtCache[provinceId].find((d: any) => normalizeName(d.DISTRICT_NAME) === norm);
+  return found ? found.DISTRICT_ID : null;
+}
+
 export async function calculateViettelPostFee(
   req: ViettelPostCalculateRequest
 ): Promise<ViettelPostCalculateResult> {
-  const res = await apiRequest<ViettelPostRateItem[]>('/shipping/viettelpost/calculate', {
-    method: 'POST',
-    body: JSON.stringify({
-      address_to: {
-        city:       req.province,   // dùng cho validation (address_to.city required)
-        state:      req.district,   // dùng cho validation (address_to.state required)
-        state_name: req.province,   // ViettelPost::getDataShip() → RECEIVER_PROVINCE (tỉnh)
-        city_name:  req.district,   // ViettelPost::getDataShip() → RECEIVER_DISTRICT (huyện)
-      },
-      weight:      req.weight,
-      order_total: req.orderTotal,
-    }),
-  });
+  try {
+    const provId = await getProvinceId(req.province);
+    const distId = provId ? await getDistrictId(provId, req.district) : null;
+    
+    // Nếu lấy location thành công, tiến hành gọi API tính cước
+    if (provId && distId) {
+      const response = await fetch('/api_vtp/order/getPriceAll', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Token': VTP_TOKEN
+        },
+        body: JSON.stringify({
+          SENDER_DISTRICT: 12, // Default sender
+          SENDER_PROVINCE: 1,  // Default sender
+          RECEIVER_DISTRICT: distId,
+          RECEIVER_PROVINCE: provId,
+          PRODUCT_TYPE: 'HH',
+          PRODUCT_WEIGHT: req.weight || 500,
+          PRODUCT_PRICE: req.orderTotal || 100000,
+          MONEY_COLLECTION: 0,
+          TYPE: 1
+        })
+      });
 
-  if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-    return { rates: res.data };
+      const json = await response.json();
+      const apiRates = Array.isArray(json) ? json : (json.data || []);
+      
+      if (apiRates && apiRates.length > 0) {
+        // Map response "MA_DV_CHINH" tới "vtp_ship_ghht/ghn/ghtk"
+        const mappedRates: ViettelPostRateItem[] = apiRates.map((r: any) => {
+          let typeCode: ViettelPostShipCode = 'vtp_ship_ghtk';
+          if (r.MA_DV_CHINH === 'VHT') typeCode = 'vtp_ship_ghht';
+          else if (r.MA_DV_CHINH === 'NCOD') typeCode = 'vtp_ship_ghn';
+
+          return {
+            id: typeCode,
+            type: typeCode,
+            name: `ViettelPost - ${r.TEN_DICHVU}`,
+            price: r.GIA_CUOC,
+            company_name: 'SHIP_VIETTEL_POST',
+            shipment_id: '',
+          };
+        });
+        
+        return { rates: mappedRates };
+      }
+    }
+  } catch (error) {
+    console.error("VTP Error:", error);
   }
 
-  // Fallback: trả về options với fee=0
+  // Fallback: trả về options với fee=0 nếu lỗi mạng
   return {
     rates: VIETTELPOST_SERVICES.map(s => ({
-      id: `vtp_${s.codeShip}_${Date.now()}`,
+      id: s.codeShip,
       price: 0,
       name: s.textShip,
       company_name: 'SHIP_VIETTEL_POST' as const,
       shipment_id: '',
       type: s.codeShip,
     })),
-    error: res.error,
+    error: undefined,
   };
 }
 
