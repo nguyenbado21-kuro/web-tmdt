@@ -93,6 +93,7 @@ export interface OrderDetail {
     id: number;
     name: string;
     price: string;
+    slug?: string;
     product_images: Array<{
       link: string;
       alt: string;

@@ -111,7 +111,8 @@ export const api = {
       return { success: true, data: allProducts };
     },
 
-    getById: (id: string) => request<Product>(`/product/${id}`),
+    getById: (id: string, noCache?: boolean) => 
+      request<Product>(`/product/${id}${noCache ? `?t=${Date.now()}` : ''}`),
 
     getByCategory: (id: string | number) => request<Category>(`/product/listCatebyID/${id}`),
 
@@ -156,22 +157,18 @@ export const api = {
         formData.append('reviewer_phone', data.reviewer_phone);
       }
       
-      // Add images using distinct keys to support all potential backend validation schemas without PHP type collision
+      // Add images to FormData
       if (data.images && data.images.length > 0) {
         data.images.forEach((image) => {
           formData.append('images[]', image);
-          formData.append('image', image);
-          formData.append('review_images[]', image);
         });
         console.log(`Added ${data.images.length} images to FormData`);
       }
       
-      // Add videos using distinct keys to support all potential backend validation schemas without PHP type collision
+      // Add videos to FormData
       if (data.videos && data.videos.length > 0) {
         data.videos.forEach((video) => {
           formData.append('videos[]', video);
-          formData.append('video', video);
-          formData.append('review_videos[]', video);
         });
         console.log(`Added ${data.videos.length} videos to FormData`);
       }

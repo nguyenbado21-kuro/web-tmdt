@@ -229,7 +229,7 @@ export default function OrderDetail() {
                       </div>
                       {order.status === '5' && (
                         <button
-                          onClick={() => navigate(`/product/${item.product.id || item.product_id}#reviews`)}
+                          onClick={() => navigate(`/product/${item.product.slug || item.product.id || item.product_id}#reviews`)}
                           className="text-xs text-brand-500 border border-brand-500 px-3 py-1 rounded-full hover:bg-brand-50 transition-colors"
                         >
                           Đánh giá

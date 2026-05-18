@@ -16,9 +16,16 @@ const baseUrl = import.meta.env.VITE_URL_BACKEND;
 
 const formatMediaUrl = (url: string): string => {
   if (!url || typeof url !== 'string') return '';
-  const trimmed = url.trim();
+  
+  // Remove backslashes
+  let trimmed = url.trim().replace(/\\/g, '');
+  
   if (!trimmed || trimmed.toUpperCase() === 'NULL' || trimmed.toLowerCase() === 'null') return '';
   if (trimmed.startsWith('http')) return trimmed;
+  
+  // Only replace multiple slashes for relative paths to avoid breaking http://
+  trimmed = trimmed.replace(/\/+/g, '/');
+  
   const base = baseUrl?.endsWith('/') ? baseUrl.slice(0, -1) : (baseUrl || '');
   const path = trimmed.startsWith('/') ? trimmed : '/' + trimmed;
   return base + path;
@@ -248,7 +255,7 @@ const compressVideo = async (file: File, maxSizeMB: number): Promise<File> => {
 };
 
 export default function ProductDetail() {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const { addToCart } = useCart();
   const navigate = useNavigate();
   const [qty, setQty] = useState(1);
@@ -267,11 +274,20 @@ export default function ProductDetail() {
   const [reviewVideos, setReviewVideos] = useState<File[]>([]);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [submittingText, setSubmittingText] = useState('');
+  const [reviewPage, setReviewPage] = useState(1);
+  const reviewsPerPage = 5;
+  const [localReviews, setLocalReviews] = useState<any[]>([]);
 
   const { data: product, loading, error, refetch } = useFetch(
-    () => api.products.getById(id!),
-    [id]
+    () => api.products.getById(slug!),
+    [slug]
   );
+
+  useEffect(() => {
+    if (product?.reviews) {
+      setLocalReviews(product.reviews);
+    }
+  }, [product]);
 
   useEffect(() => {
     if (window.location.hash === '#reviews') {
@@ -358,8 +374,8 @@ export default function ProductDetail() {
     setIsSubmittingReview(true);
     setSubmittingText('Đang xử lý file...');
     try {
-      const processedImages = reviewImages;
-      const processedVideos = reviewVideos;
+      const processedImages = await Promise.all(reviewImages.map(f => compressImage(f, 2)));
+      const processedVideos = await Promise.all(reviewVideos.map(f => compressVideo(f, 2)));
 
       setSubmittingText('Đang gửi đánh giá...');
       console.log('Submitting review:', {
@@ -393,7 +409,18 @@ export default function ProductDetail() {
           setReviewerName('');
           setReviewerPhone('');
         }
-        refetch();
+        
+        // Fetch product silently to update reviews without triggering page loading spinner
+        try {
+          // Pass true as second argument to bypass browser cache
+          const freshProduct = await api.products.getById(product.id.toString(), true);
+          if (freshProduct.success && freshProduct.data?.reviews) {
+            setLocalReviews(freshProduct.data.reviews);
+            setReviewPage(1); // Go back to first page to see the new review
+          }
+        } catch (fetchErr) {
+          console.error('Failed to fetch updated reviews:', fetchErr);
+        }
       } else {
         alert(res.error || 'Có lỗi xảy ra khi gửi đánh giá');
       }
@@ -443,16 +470,33 @@ export default function ProductDetail() {
   const salePrice = product.price_sale && Number(product.price_sale) > 0 ? Number(product.price_sale) : null;
   const discount = salePrice ? Math.round(((currentPrice - salePrice) / currentPrice) * 100) : 0;
 
-  const reviewsList = product.reviews || [];
-  const derivedReviewCount = reviewsList.length > 0 ? reviewsList.length : Number(product.reviewCount || 0);
-  const derivedRating = reviewsList.length > 0
-    ? parseFloat((reviewsList.reduce((sum: number, rv: any) => sum + Number(rv.rating || 5), 0) / reviewsList.length).toFixed(1))
+  // Reviews processing using localReviews state for silent updates
+  const validReviewsCount = localReviews.filter(r => Number(r.status) === 1).length;
+  const currentReviews = localReviews
+    .filter(r => Number(r.status) === 1)
+    .sort((a, b) => {
+      // Sắp xếp ưu tiên: có ảnh -> có video -> chữ dài -> chữ ngắn
+      const aHasMedia = (a.images && a.images !== 'NULL') || (a.videos && a.videos !== 'NULL');
+      const bHasMedia = (b.images && b.images !== 'NULL') || (b.videos && b.videos !== 'NULL');
+      
+      if (aHasMedia && !bHasMedia) return -1;
+      if (!aHasMedia && bHasMedia) return 1;
+      
+      const aLen = a.comment ? a.comment.length : 0;
+      const bLen = b.comment ? b.comment.length : 0;
+      return bLen - aLen;
+    })
+    .slice((reviewPage - 1) * reviewsPerPage, reviewPage * reviewsPerPage);
+
+  const derivedReviewCount = validReviewsCount > 0 ? validReviewsCount : Number(product.reviewCount || 0);
+  const derivedRating = validReviewsCount > 0
+    ? parseFloat((localReviews.filter(r => Number(r.status) === 1).reduce((sum: number, rv: any) => sum + Number(rv.rating || 5), 0) / validReviewsCount).toFixed(1))
     : Number(product.rating || 0);
 
   const getStarPercentage = (star: number) => {
-    if (reviewsList.length === 0) return 0;
-    const count = reviewsList.filter((rv: any) => Number(rv.rating || 5) === star).length;
-    return Math.round((count / reviewsList.length) * 100);
+    if (localReviews.length === 0) return 0;
+    const count = localReviews.filter((rv: any) => Number(rv.rating || 5) === star).length;
+    return Math.round((count / localReviews.length) * 100);
   };
 
 
@@ -763,7 +807,9 @@ export default function ProductDetail() {
           {/* Reviews List */}
           <div className="mt-8 mb-8 space-y-6">
             {(product.reviews && product.reviews.length > 0) ? (
-              product.reviews.map((rv: any, idx: number) => (
+              product.reviews
+                .slice((reviewPage - 1) * reviewsPerPage, reviewPage * reviewsPerPage)
+                .map((rv: any, idx: number) => (
                 <div key={idx} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm animate-fade-in-up">
                   <div className="flex items-start justify-between mb-2">
                     <div>
@@ -806,7 +852,9 @@ export default function ProductDetail() {
                           const parsed = JSON.parse(rawImages);
                           images = Array.isArray(parsed) ? parsed : [parsed];
                         } catch {
-                          images = rawImages.split(',').map((s: string) => s.trim()).filter(Boolean);
+                          // Fallback: clean up brackets, quotes, and backslashes if JSON.parse fails
+                          const cleaned = rawImages.replace(/[\[\]"'\\]/g, '');
+                          images = cleaned.split(',').map((s: string) => s.trim()).filter(Boolean);
                         }
                       } else if (Array.isArray(rawImages)) {
                         images = rawImages;
@@ -873,7 +921,9 @@ export default function ProductDetail() {
                           const parsed = JSON.parse(rawVideos);
                           videos = Array.isArray(parsed) ? parsed : [parsed];
                         } catch {
-                          videos = rawVideos.split(',').map((s: string) => s.trim()).filter(Boolean);
+                          // Fallback: clean up brackets, quotes, and backslashes if JSON.parse fails
+                          const cleaned = rawVideos.replace(/[\[\]"'\\]/g, '');
+                          videos = cleaned.split(',').map((s: string) => s.trim()).filter(Boolean);
                         }
                       } else if (Array.isArray(rawVideos)) {
                         videos = rawVideos;
@@ -898,19 +948,67 @@ export default function ProductDetail() {
                         {validVideos.map((video: string, videoIdx: number) => {
                           const fullUrl = formatMediaUrl(video);
                           return (
-                            <div key={videoIdx} className="relative w-48 h-28 rounded-lg overflow-hidden border-2 border-gray-200 hover:border-brand-500 transition-all duration-300 hover:scale-105 group">
+                            <div 
+                              key={videoIdx} 
+                              onClick={() => {
+                                const modal = document.createElement('div');
+                                modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm transition-opacity duration-300 opacity-0';
+                                
+                                // Animate in
+                                requestAnimationFrame(() => {
+                                  modal.classList.remove('opacity-0');
+                                });
+                                
+                                modal.onclick = (e) => {
+                                  if (e.target === modal) {
+                                    modal.classList.add('opacity-0');
+                                    setTimeout(() => modal.remove(), 300);
+                                  }
+                                };
+                                
+                                const videoContainer = document.createElement('div');
+                                videoContainer.className = 'relative w-full max-w-5xl max-h-[90vh] flex items-center justify-center';
+                                
+                                const closeBtn = document.createElement('button');
+                                closeBtn.className = 'absolute -top-12 right-0 bg-white/20 hover:bg-white/40 text-white rounded-full p-2 transition-colors z-50';
+                                closeBtn.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>';
+                                closeBtn.onclick = () => {
+                                  modal.classList.add('opacity-0');
+                                  setTimeout(() => modal.remove(), 300);
+                                };
+                                
+                                const videoEl = document.createElement('video');
+                                videoEl.src = fullUrl;
+                                videoEl.className = 'max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl scale-95 transition-transform duration-300';
+                                videoEl.controls = true;
+                                videoEl.autoplay = true;
+                                
+                                // Animate scale
+                                requestAnimationFrame(() => {
+                                  videoEl.classList.remove('scale-95');
+                                  videoEl.classList.add('scale-100');
+                                });
+                                
+                                videoContainer.appendChild(videoEl);
+                                videoContainer.appendChild(closeBtn);
+                                modal.appendChild(videoContainer);
+                                document.body.appendChild(modal);
+                              }}
+                              className="relative w-48 h-28 rounded-lg overflow-hidden border-2 border-gray-200 hover:border-brand-500 transition-all duration-300 hover:scale-105 group cursor-pointer"
+                            >
                               <video
                                 src={fullUrl}
-                                className="w-full h-full object-cover"
-                                controls
+                                className="w-full h-full object-cover pointer-events-none"
                                 preload="metadata"
                               >
                                 Trình duyệt của bạn không hỗ trợ video.
                               </video>
-                              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors pointer-events-none flex items-center justify-center">
-                                <svg className="w-12 h-12 text-white/80 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M8 5v14l11-7z"/>
-                                </svg>
+                              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                                <div className="bg-white/90 rounded-full p-2 group-hover:scale-110 transition-transform shadow-lg">
+                                  <svg className="w-8 h-8 text-brand-500 ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M8 5v14l11-7z"/>
+                                  </svg>
+                                </div>
                               </div>
                             </div>
                           );
@@ -927,6 +1025,43 @@ export default function ProductDetail() {
                 </svg>
                 <p className="text-gray-500 text-lg font-medium">Chưa có đánh giá nào</p>
                 <p className="text-gray-400 text-sm mt-2">Hãy là người đầu tiên đánh giá sản phẩm này</p>
+              </div>
+            )}
+
+            {/* Pagination Controls */}
+            {localReviews.length > reviewsPerPage && (
+              <div className="flex justify-center items-center gap-2 mt-8">
+                <button
+                  onClick={() => setReviewPage(prev => Math.max(1, prev - 1))}
+                  disabled={reviewPage === 1}
+                  className="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors flex items-center gap-1"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"/></svg>
+                  Trước
+                </button>
+                <div className="flex gap-1 overflow-x-auto max-w-[200px] sm:max-w-none scrollbar-hide">
+                  {Array.from({ length: Math.ceil(localReviews.length / reviewsPerPage) }, (_, i) => i + 1).map(page => (
+                    <button
+                      key={page}
+                      onClick={() => setReviewPage(page)}
+                      className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-300 flex-shrink-0 ${
+                        reviewPage === page 
+                          ? 'bg-brand-500 text-white font-medium shadow-md scale-105' 
+                          : 'text-gray-600 hover:bg-gray-100 hover:text-brand-500'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setReviewPage(prev => Math.min(Math.ceil(localReviews.length / reviewsPerPage), prev + 1))}
+                  disabled={reviewPage === Math.ceil(localReviews.length / reviewsPerPage)}
+                  className="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors flex items-center gap-1"
+                >
+                  Sau
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"/></svg>
+                </button>
               </div>
             )}
           </div>
@@ -1129,7 +1264,7 @@ export default function ProductDetail() {
                       )}
 
                       {/* Image */}
-                      <Link to={`/product/${p.id}`} className="block relative overflow-hidden bg-gray-50 aspect-square">
+                      <Link to={`/product/${p.slug || p.id}`} className="block relative overflow-hidden bg-gray-50 aspect-square">
                         {relatedImages[0] ? (
                           <img
                             src={typeof relatedImages[0] === 'string' && relatedImages[0] ? (relatedImages[0].startsWith('http') ? relatedImages[0] : baseUrl + relatedImages[0]) : ''}
@@ -1152,7 +1287,7 @@ export default function ProductDetail() {
                           </span>
                         </div>
 
-                        <Link to={`/product/${p.id}`}>
+                        <Link to={`/product/${p.slug || p.id}`}>
                           <h3 className="font-semibold text-gray-900 mb-2 sm:mb-3 line-clamp-2 group-hover:text-brand-500 transition-colors leading-snug text-sm sm:text-base">
                             {p.name}
                           </h3>
@@ -1190,7 +1325,7 @@ export default function ProductDetail() {
                           </div>
 
                           <Link
-                            to={`/product/${p.id}`}
+                            to={`/product/${p.slug || p.id}`}
                             className="inline-flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-brand-500 text-white rounded-full hover:bg-brand-600 transition-colors group-hover:scale-110 duration-300"
                           >
                             <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -64,7 +64,7 @@ export default function ProductCard({ product }: Props) {
   return (
     <div className="card group flex flex-col hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
       {/* Image */}
-      <Link to={`/product/${product.id}`} className="relative overflow-hidden bg-gray-50 aspect-square block">
+      <Link to={`/product/${product.slug || product.id}`} className="relative overflow-hidden bg-gray-50 aspect-square block">
         {imageUrl ? (
           <img
             src={imageUrl}
@@ -93,7 +93,7 @@ export default function ProductCard({ product }: Props) {
         <div className="text-xs text-brand-500 font-medium uppercase tracking-wide">
           {product.categoryId ? product.categoryId.toString().replace('cat-', 'Category ') : 'Sản phẩm'}
         </div>
-        <Link to={`/product/${product.id}`}>
+        <Link to={`/product/${product.slug || product.id}`}>
           <h3 className="font-semibold text-gray-900 leading-snug hover:text-brand-500 transition-colors line-clamp-2">
             {product.name}
           </h3>

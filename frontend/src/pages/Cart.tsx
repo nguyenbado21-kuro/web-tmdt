@@ -114,7 +114,7 @@ export default function Cart() {
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <Link to={`/product/${product.id}`}
+                <Link to={`/product/${product.slug || product.id}`}
                   className="font-semibold text-gray-900 hover:text-brand-500 transition-colors line-clamp-2 text-sm sm:text-base">
                   {product.name}
                 </Link>

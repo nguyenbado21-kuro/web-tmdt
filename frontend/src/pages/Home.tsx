@@ -513,7 +513,7 @@ function BestSellers() {
           <div className="flex flex-col gap-2 sm:gap-3 lg:gap-4 mt-6 lg:mt-0">
             {loading && <LoadingSpinner />}
             {best.map((p: Product, i: number) => (
-              <Link key={p.id} to={`/product/${p.id}`}
+              <Link key={p.id} to={`/product/${p.slug || p.id}`}
                 className="flex items-center gap-2 sm:gap-3 lg:gap-4 bg-white/5 hover:bg-white/10 rounded-xl sm:rounded-2xl p-2 sm:p-3 lg:p-4 transition-colors group">
                 <span className="font-display text-xl sm:text-2xl lg:text-3xl font-bold text-white/20 w-5 sm:w-6 lg:w-8 shrink-0">
                   0{i + 1}

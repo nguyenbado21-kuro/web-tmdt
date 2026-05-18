@@ -118,7 +118,7 @@ export default function Header() {
   };
 
   const handleSuggestionClick = (product: Product) => {
-    navigate(`/product/${product.id}`);
+    navigate(`/product/${product.slug || product.id}`);
     setSearch('');
     setShowSuggestions(false);
   };
