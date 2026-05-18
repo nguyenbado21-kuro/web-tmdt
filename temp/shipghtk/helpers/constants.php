@@ -1,5 +1,0 @@
-<?php
-
-if (! defined('SHIPGHTK_SHIPPING_METHOD_NAME')) {
-    define('SHIPGHTK_SHIPPING_METHOD_NAME', 'SHIP_GHTK');
-}
